@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { PlusCircle, MoreVertical } from "lucide-react";
+import { PlusCircle, MoreVertical, Trash2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -12,6 +12,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +38,7 @@ import { Progress } from "@/components/ui/progress";
 import placeholderImages from "@/lib/placeholder-images.json";
 import { ClientDialog } from "@/components/clients/client-dialog";
 import type { Client, ClientStatus } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
 
 const initialClients: Client[] = [
   {
@@ -79,21 +99,48 @@ const statusVariant: { [key in ClientStatus]: "default" | "secondary" | "destruc
   "Completed": "secondary",
   "On Hold": "destructive",
   "Lead": "outline",
+  "Cancelled": "destructive",
 };
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>(initialClients);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
+  const { toast } = useToast();
 
-  const handleCreateClient = (newClient: Omit<Client, 'id' | 'project' | 'progress' | 'team'>) => {
-    const clientToAdd: Client = {
-      id: `CLIENT-${Math.floor(Math.random() * 10000)}`,
-      project: "New Project",
-      progress: 0,
-      team: [],
-      ...newClient
+  const handleSaveClient = (clientData: Omit<Client, 'id' | 'project' | 'progress' | 'team'> | Client) => {
+    if ('id' in clientData) {
+      // Editing existing client
+      setClients(prev => prev.map(c => c.id === clientData.id ? { ...c, ...clientData } : c));
+      toast({ title: "Client Updated", description: "The client details have been saved."});
+    } else {
+      // Creating new client
+      const clientToAdd: Client = {
+        id: `CLIENT-${Math.floor(Math.random() * 10000)}`,
+        project: "New Project",
+        progress: 0,
+        team: [],
+        ...clientData
+      }
+      setClients(prev => [clientToAdd, ...prev]);
+      toast({ title: "Client Created", description: "The new client has been added."});
     }
-    setClients(prev => [clientToAdd, ...prev]);
   };
+
+  const handleOpenEditDialog = (client: Client) => {
+    setEditingClient(client);
+    setIsClientDialogOpen(true);
+  }
+
+  const handleDeleteClient = (clientId: string) => {
+    setClients(prev => prev.filter(c => c.id !== clientId));
+    toast({ title: "Client Deleted", description: "The client has been successfully deleted." });
+  }
+
+  const onDialogClose = () => {
+    setEditingClient(null);
+    setIsClientDialogOpen(false);
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -102,7 +149,11 @@ export default function ClientsPage() {
             <h1 className="text-2xl font-bold">Clients</h1>
             <p className="text-muted-foreground">Manage all your client relationships and projects.</p>
          </div>
-        <ClientDialog onCreateClient={handleCreateClient}>
+        <ClientDialog 
+          onSave={handleSaveClient}
+          isOpen={isClientDialogOpen && !editingClient}
+          onOpenChange={setIsClientDialogOpen}
+        >
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
             Add New Client
@@ -112,7 +163,7 @@ export default function ClientsPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {clients.map((client) => (
-          <Card key={client.name}>
+          <Card key={client.id}>
             <CardHeader className="flex flex-row items-start justify-between">
               <div className="flex items-center gap-4">
                 <Image
@@ -128,13 +179,45 @@ export default function ClientsPage() {
                   <CardDescription>{client.project}</CardDescription>
                 </div>
               </div>
-               <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => handleOpenEditDialog(client)}>
+                    Edit Client
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                   <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Client
+                          </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                          <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete the client "{client.name}".
+                          </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteClient(client.id)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                      </AlertDialogContent>
+                  </AlertDialog>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                 <Badge variant={statusVariant[client.status]}>{client.status}</Badge>
+                 <Badge variant={statusVariant[client.status] || 'outline'}>{client.status}</Badge>
                  <div className="flex -space-x-2">
                     {client.team.map((member, index) => (
                         <Avatar key={index} className="h-6 w-6 border-2 border-card">
@@ -160,6 +243,15 @@ export default function ClientsPage() {
           </Card>
         ))}
       </div>
+
+       {editingClient && (
+        <ClientDialog
+            client={editingClient}
+            onSave={(editedClient) => handleSaveClient({ ...editingClient, ...editedClient })}
+            isOpen={isClientDialogOpen && !!editingClient}
+            onOpenChange={onDialogClose}
+        />
+      )}
     </div>
   );
 }

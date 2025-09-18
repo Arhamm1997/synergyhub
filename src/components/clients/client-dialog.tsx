@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -33,7 +33,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MultiSelect } from "@/components/ui/multi-select";
-import type { Client } from "@/lib/types";
+import type { Client, ClientStatus } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
 
 const clientServices = [
   { value: 'custom-website-design', label: 'Custom Website Design' },
@@ -62,34 +64,40 @@ const clientServices = [
   { value: 'nemt-call-center-services', label: 'NEMT Call Center Services' },
 ];
 
-const clientStatuses = ["Lead", "Active", "On Hold", "Completed", "Cancelled"];
+const clientStatuses: ClientStatus[] = ["Lead", "Active", "On Hold", "Completed", "Cancelled"];
 
 const formSchema = z.object({
   name: z.string().min(1, "Client name is required"),
   logoUrl: z.string().url("Please enter a valid URL for the logo").optional().or(z.literal('')),
   services: z.array(z.string()).min(1, "Please select at least one service"),
-  status: z.enum(["Lead", "Active", "On Hold", "Completed", "Cancelled"]),
+  status: z.enum(clientStatuses),
 });
 
 type ClientFormValues = z.infer<typeof formSchema>;
 
 interface ClientDialogProps {
-  children: ReactNode;
+  children?: ReactNode;
   client?: Client;
-  onCreateClient: (client: Omit<Client, 'id' | 'project' | 'progress' | 'team'>) => void;
+  onSave: (client: Omit<Client, 'id' | 'project' | 'progress' | 'team'> | Client) => void;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function ClientDialog({ children, client, onCreateClient }: ClientDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function ClientDialog({ children, client, onSave, isOpen, onOpenChange }: ClientDialogProps) {
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: client?.name || "",
-      logoUrl: client?.logoUrl || "",
-      services: [],
-      status: client?.status || "Lead",
-    },
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        name: client?.name || "",
+        logoUrl: client?.logoUrl || "",
+        services: client?.services || [],
+        status: client?.status || "Lead",
+      });
+    }
+  }, [client, form, isOpen]);
 
   function onSubmit(values: ClientFormValues) {
     const newClient = {
@@ -99,14 +107,13 @@ export function ClientDialog({ children, client, onCreateClient }: ClientDialogP
       status: values.status,
       services: values.services,
     };
-    onCreateClient(newClient);
-    form.reset();
-    setIsOpen(false);
+    onSave(client ? { ...client, ...newClient } : newClient);
+    onOpenChange(false);
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{client ? "Edit Client" : "Add New Client"}</DialogTitle>
@@ -179,7 +186,7 @@ export function ClientDialog({ children, client, onCreateClient }: ClientDialogP
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button type="submit">{client ? "Save Changes" : "Create Client"}</Button>
             </DialogFooter>
           </form>
