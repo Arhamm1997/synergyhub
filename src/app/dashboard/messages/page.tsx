@@ -10,6 +10,7 @@ import {
   Mic,
   Send,
   Users as UsersIcon,
+  ArrowLeft
 } from "lucide-react";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,8 +25,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import placeholderImages from "@/lib/placeholder-images.json";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
 
 
 const contacts = [
@@ -93,8 +95,22 @@ const messages = [
 ];
 
 export default function MessagesPage() {
-  const [activeContact, setActiveContact] = useState(contacts[0]);
-  const [showChat, setShowChat] = useState(false);
+  const searchParams = useSearchParams();
+  const contactName = searchParams.get("contact");
+  const [activeContact, setActiveContact] = useState(() => {
+    const initialContact = contacts.find(c => c.name === contactName);
+    return initialContact || contacts[0];
+  });
+  const [showChat, setShowChat] = useState(!!contactName);
+
+  useEffect(() => {
+    const contactFromUrl = contacts.find(c => c.name === contactName);
+    if (contactFromUrl) {
+      setActiveContact(contactFromUrl);
+      setShowChat(true);
+    }
+  }, [contactName]);
+
 
   const handleContactClick = (contact: typeof contacts[0]) => {
     setActiveContact(contact);
@@ -119,7 +135,7 @@ export default function MessagesPage() {
                 key={index}
                 onClick={() => handleContactClick(contact)}
                 className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
-                  contact.name === activeContact.name
+                  activeContact && contact.name === activeContact.name
                     ? "bg-muted"
                     : "hover:bg-muted"
                 }`}
@@ -155,11 +171,12 @@ export default function MessagesPage() {
       </Card>
 
       {/* Chat Window */}
+      { activeContact && (
       <Card className={cn("flex-col h-full", showChat ? "flex" : "hidden md:flex")}>
         <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
           <div className="flex items-center gap-3">
              <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setShowChat(false)}>
-                <MessageCircle className="h-5 w-5" />
+                <ArrowLeft className="h-5 w-5" />
             </Button>
             <Avatar>
               <AvatarImage
@@ -252,6 +269,7 @@ export default function MessagesPage() {
           </div>
         </div>
       </Card>
+      )}
     </div>
   );
 }

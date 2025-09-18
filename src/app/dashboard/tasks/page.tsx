@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -302,6 +303,7 @@ const KanbanCard = ({ task, index }: { task: Task; index: number }) => {
 
 
 export default function TasksPage() {
+  const router = useRouter();
   const [tasks, setTasks] = React.useState<Task[]>(initialTasks);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -378,6 +380,11 @@ export default function TasksPage() {
     { title: "Cancelled", tasks: tasks.filter((t) => t.status === "Cancelled") },
   ];
 
+  const handleRowClick = (task: Task) => {
+    router.push(`/dashboard/messages?contact=${task.assignee.name}`);
+  };
+
+
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
@@ -392,7 +399,7 @@ export default function TasksPage() {
                  {activeTab === 'grid' && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="ml-auto">
+                        <Button variant="outline" className="ml-auto hidden sm:flex">
                             Columns <ChevronDown className="ml-2 h-4 w-4" />
                         </Button>
                         </DropdownMenuTrigger>
@@ -469,6 +476,8 @@ export default function TasksPage() {
                       <TableRow
                         key={row.id}
                         data-state={row.getIsSelected() && "selected"}
+                        onClick={() => handleRowClick(row.original)}
+                        className="cursor-pointer"
                       >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell key={cell.id}>
