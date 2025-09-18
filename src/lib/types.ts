@@ -8,6 +8,7 @@ export type TaskStatus = "Backlog" | "Todo" | "In Progress" | "In Review" | "Don
 export type ProjectStatus = "Not Started" | "In Progress" | "On Hold" | "Completed" | "Cancelled";
 export type ClientStatus = "Lead" | "Active" | "On Hold" | "Completed";
 export type UserStatus = "Online" | "Away" | "Offline";
+export type Department = "Engineering" | "Design" | "Marketing" | "Sales" | "Support" | "HR" | "Operations";
 
 export interface Assignee {
   name: string;
@@ -63,7 +64,7 @@ export interface Member {
     id: string;
     name: string;
     role: string;
-    department: "Engineering" | "Design" | "Marketing" | "Sales" | "Support";
+    department: Department;
     email: string;
     avatarUrl: string;
     avatarHint: string;

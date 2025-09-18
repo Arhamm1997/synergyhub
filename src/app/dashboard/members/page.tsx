@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import placeholderImages from "@/lib/placeholder-images.json";
 import type { Member } from "@/lib/types";
+import { MemberDialog } from "@/components/members/member-dialog";
 
 const initialMembers: Member[] = [
   {
@@ -62,10 +63,20 @@ const departmentVariant: { [key in Member['department']]: "default" | "secondary
     "Marketing": "outline",
     "Sales": "destructive",
     "Support": "default",
+    "HR": "secondary",
+    "Operations": "default",
 };
 
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>(initialMembers);
+
+  const handleCreateMember = (newMember: Omit<Member, 'id'>) => {
+    const memberToAdd: Member = {
+      id: `MEMBER-${Math.floor(Math.random() * 10000)}`,
+      ...newMember
+    }
+    setMembers(prev => [memberToAdd, ...prev]);
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -74,10 +85,12 @@ export default function MembersPage() {
             <h1 className="text-2xl font-bold">Team Members</h1>
             <p className="text-muted-foreground">Manage your team and their roles.</p>
          </div>
-         <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Member
-          </Button>
+         <MemberDialog onCreateMember={handleCreateMember}>
+            <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Member
+            </Button>
+         </MemberDialog>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -90,7 +103,7 @@ export default function MembersPage() {
                 </Avatar>
                 <CardTitle>{member.name}</CardTitle>
                 <CardDescription>{member.role}</CardDescription>
-                <Badge variant={departmentVariant[member.department]} className="mt-2">{member.department}</Badge>
+                <Badge variant={departmentVariant[member.department] || 'default'} className="mt-2">{member.department}</Badge>
             </CardHeader>
             <CardContent className="text-center text-sm text-muted-foreground">
               <p>{member.email}</p>
