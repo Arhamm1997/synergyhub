@@ -22,7 +22,6 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
-import * as XLSX from "xlsx";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -82,52 +81,11 @@ export default function BusinessPage() {
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // NOTE: This is a simulation. A full implementation would use a library
-      // like 'xlsx' to parse the file content here.
-      console.log("File selected:", file.name);
-
-      const sampleImportedData: Business[] = [
-        {
-            id: "BIZ-101",
-            name: "DataCorp",
-            owner: members[0] || { name: "John Doe", avatarUrl: "", avatarHint: "" },
-            phone: "555-0101",
-            type: "Tech",
-            status: "Lead",
-            notes: "Imported from Excel. Prospect for Q3.",
-        },
-        {
-            id: "BIZ-102",
-            name: "BuildIt Construction",
-            owner: members[1] || { name: "Jane Smith", avatarUrl: "", avatarHint: "" },
-            phone: "555-0102",
-            type: "Construction",
-            status: "Active",
-            notes: "Imported from Excel. Retainer client.",
-        },
-      ];
-
-      setBusinesses(prev => [...prev, ...sampleImportedData]);
-
-      toast({
-        title: "Import Successful",
-        description: `${sampleImportedData.length} businesses have been imported and added to the table.`,
-      });
-
-      // Reset file input
-      if(fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
-  };
-
   const handleImportClick = () => {
-    fileInputRef.current?.click();
+    toast({
+        title: "Feature Coming Soon!",
+        description: "The ability to import from Excel is not yet available.",
+    });
   };
 
   const handleDeleteBusiness = (businessId: string) => {
@@ -335,13 +293,6 @@ export default function BusinessPage() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-              accept=".xlsx, .xls, .csv"
-            />
             <Button variant="outline" onClick={handleImportClick}>
                 <Upload className="mr-2 h-4 w-4" />
                 Import from Excel
