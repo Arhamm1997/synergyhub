@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -61,9 +61,10 @@ type CreateTaskFormValues = z.infer<typeof formSchema>;
 
 interface CreateTaskDialogProps {
   onCreate: (task: Task) => void;
+  children?: ReactNode;
 }
 
-export function CreateTaskDialog({ onCreate }: CreateTaskDialogProps) {
+export function CreateTaskDialog({ onCreate, children }: CreateTaskDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const form = useForm<CreateTaskFormValues>({
     resolver: zodResolver(formSchema),
@@ -96,12 +97,14 @@ export function CreateTaskDialog({ onCreate }: CreateTaskDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="h-8 gap-1">
-          <PlusCircle className="h-3.5 w-3.5" />
-          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-            Create Task
-          </span>
-        </Button>
+        {children || (
+            <Button size="sm" className="h-8 gap-1">
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    Create Task
+                </span>
+            </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

@@ -66,6 +66,7 @@ import { TaskCalendarView } from "@/components/tasks/task-calendar-view";
 import type { Task, TaskStatus } from "@/lib/types";
 import placeholderImages from "@/lib/placeholder-images.json";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useChatStore } from "@/store/chat-store";
 
 const initialTasks: Task[] = [
     {
@@ -203,16 +204,23 @@ export const columns: ColumnDef<Task>[] = [
   {
     accessorKey: "assignee",
     header: "Assignee",
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const assignee = row.getValue("assignee") as Task["assignee"];
+      const meta = table.options.meta as any;
+      
+      const handleAssigneeClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        meta.handleAssigneeClick(assignee);
+      }
+
       return (
-        <div className="flex items-center gap-2">
+        <button className="flex items-center gap-2 text-left" onClick={handleAssigneeClick}>
           <Avatar className="h-8 w-8">
             <AvatarImage src={assignee.avatarUrl} alt={assignee.name} data-ai-hint={assignee.avatarHint} />
             <AvatarFallback>{assignee.name.charAt(0)}</AvatarFallback>
           </Avatar>
           <span>{assignee.name}</span>
-        </div>
+        </button>
       );
     },
   },
@@ -324,6 +332,7 @@ export default function TasksPage() {
   const [rowSelection, setRowSelection] = React.useState({});
   const [activeTab, setActiveTab] = React.useState("grid");
   const isMobile = useIsMobile();
+  const { openChat, setContact } = useChatStore();
 
   const [selectedTask, setSelectedTask] = React.useState<Task | null>(null);
   const [isDetailViewOpen, setIsDetailViewOpen] = React.useState(false);
@@ -372,6 +381,11 @@ export default function TasksPage() {
     setIsDetailViewOpen(true);
   };
 
+  const handleAssigneeClick = (assignee: Task["assignee"]) => {
+    setContact({ name: assignee.name, avatarUrl: assignee.avatarUrl, avatarHint: assignee.avatarHint, status: "Online" });
+    openChat();
+  }
+
   const handleUpdateTask = (updatedTask: Task) => {
     setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
   };
@@ -396,6 +410,7 @@ export default function TasksPage() {
     },
      meta: {
       handleTaskClick,
+      handleAssigneeClick,
     },
   });
 
@@ -493,9 +508,11 @@ export default function TasksPage() {
                         );
                       })}
                        <TableHead className="w-[40px]">
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <PlusCircle className="h-4 w-4" />
-                            </Button>
+                           <CreateTaskDialog onCreate={ (newTask) => setTasks(prev => [newTask, ...prev]) }>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <PlusCircle className="h-4 w-4" />
+                                </Button>
+                           </CreateTaskDialog>
                        </TableHead>
                     </TableRow>
                   ))}
@@ -506,11 +523,11 @@ export default function TasksPage() {
                       <TableRow
                         key={row.id}
                         data-state={row.getIsSelected() && "selected"}
-                        onClick={() => !isMobile && handleTaskClick(row.original)}
+                        onClick={() => handleTaskClick(row.original)}
                         className="cursor-pointer"
                       >
                         {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
+                          <TableCell key={cell.id} onClick={cell.column.id === 'assignee' ? (e) => e.stopPropagation() : undefined}>
                             {flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext()

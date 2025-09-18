@@ -14,7 +14,6 @@ import {
   Calendar,
   Flag,
   CheckCircle,
-  Tag,
   AlignLeft,
 } from "lucide-react";
 
@@ -22,7 +21,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -32,7 +30,6 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -48,6 +45,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import type { Task, Priority, TaskStatus } from "@/lib/types";
 import placeholderImages from "@/lib/placeholder-images.json";
+import { useToast } from "@/hooks/use-toast";
 
 const priorities: Priority[] = ["Urgent", "High", "Medium", "Low", "None"];
 const statuses: TaskStatus[] = ["Backlog", "Todo", "In Progress", "In Review", "Done", "Cancelled"];
@@ -77,16 +75,19 @@ interface TaskDetailDialogProps {
 }
 
 export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask }: TaskDetailDialogProps) {
-  const form = useForm<TaskFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: task.title,
-      description: task.description || "",
-      assigneeName: task.assignee.name,
-      priority: task.priority,
-      status: task.status,
-      dueDate: parseISO(task.dueDate),
-    },
+    const { toast } = useToast();
+    const [comment, setComment] = useState("");
+
+    const form = useForm<TaskFormValues>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+        title: task.title,
+        description: task.description || "",
+        assigneeName: task.assignee.name,
+        priority: task.priority,
+        status: task.status,
+        dueDate: parseISO(task.dueDate),
+        },
   });
 
   const onSubmit = (values: TaskFormValues) => {
@@ -102,6 +103,15 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask }: Tas
     onUpdateTask(updatedTask);
     onOpenChange(false);
   };
+
+  const handleSendComment = () => {
+    if (comment.trim() === "") return;
+    toast({
+        title: "Comment Sent",
+        description: `Your comment has been sent to ${task.assignee.name}.`,
+    });
+    setComment("");
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -144,10 +154,15 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask }: Tas
                         <AvatarFallback>AM</AvatarFallback>
                     </Avatar>
                     <div className="relative w-full">
-                         <Textarea placeholder="Write a comment..." className="pr-24" />
+                         <Textarea 
+                            placeholder="Write a comment..." 
+                            className="pr-24" 
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                         />
                          <div className="absolute bottom-2 right-2 flex items-center gap-1">
                              <Button variant="ghost" size="icon" className="h-8 w-8"><Paperclip className="h-4 w-4" /></Button>
-                            <Button size="sm"><Send className="h-4 w-4" /></Button>
+                            <Button size="sm" onClick={handleSendComment}><Send className="h-4 w-4" /></Button>
                          </div>
                     </div>
                  </div>
