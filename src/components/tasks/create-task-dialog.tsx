@@ -194,7 +194,7 @@ export function CreateTaskDialog({ onCreate }: CreateTaskDialogProps) {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
+                        </Trigger>
                       </FormControl>
                       <SelectContent>
                         {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}

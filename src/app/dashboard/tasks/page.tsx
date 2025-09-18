@@ -307,7 +307,6 @@ export default function TasksPage() {
 
     if (!destination) return;
     
-    // If dropped in the same place, do nothing
     if (source.droppableId === destination.droppableId && source.index === destination.index) {
         return;
     }
@@ -318,18 +317,12 @@ export default function TasksPage() {
         
         if (!taskToMove) return prevTasks;
 
-        // Update status based on destination column
         taskToMove.status = destination.droppableId as TaskStatus;
-
-        // Reorder tasks
+        
         const reorderedTasks = newTasks.filter(t => t.id !== draggableId);
-        
-        const destinationTasks = reorderedTasks.filter(t => t.status === destination.droppableId);
-        const otherTasks = reorderedTasks.filter(t => t.status !== destination.droppableId);
-        
-        destinationTasks.splice(destination.index, 0, taskToMove);
+        reorderedTasks.splice(destination.index, 0, taskToMove);
 
-        return [...otherTasks, ...destinationTasks];
+        return reorderedTasks;
     });
 };
 
