@@ -20,6 +20,7 @@ import {
   MoreHorizontal,
   PlusCircle,
   Trash2,
+  Upload,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -283,6 +284,10 @@ export default function BusinessPage() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => toast({ title: "Coming Soon!", description: "Import functionality is not yet implemented."})}>
+                <Upload className="mr-2 h-4 w-4" />
+                Import from monday.com
+            </Button>
             <Button onClick={handleOpenCreateDialog}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Business
