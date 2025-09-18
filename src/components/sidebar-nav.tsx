@@ -10,6 +10,7 @@ import {
   Users,
   Settings,
   FolderKanban,
+  Users as UsersIcon,
 } from "lucide-react";
 
 import { Logo } from "@/components/logo";
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/dashboard/tasks", label: "Tasks", icon: ListChecks },
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
   { href: "/dashboard/clients", label: "Clients", icon: Users },
+  { href: "/dashboard/members", label: "Members", icon: UsersIcon },
 ];
 
 const settingsNav = [

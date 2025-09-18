@@ -53,10 +53,20 @@ export interface Client {
   logoUrl: string;
   logoHint: string;
   project: string;
-  status: ClientStatus | ProjectStatus;
+  status: ClientStatus;
   progress?: number;
   team: { name: string; avatarUrl: string }[];
   services?: string[];
+}
+
+export interface Member {
+    id: string;
+    name: string;
+    role: string;
+    department: "Engineering" | "Design" | "Marketing" | "Sales" | "Support";
+    email: string;
+    avatarUrl: string;
+    avatarHint: string;
 }
 
 
@@ -71,5 +81,3 @@ export interface SummaryStat {
   description: string;
   icon: LucideIcon;
 }
-
-    

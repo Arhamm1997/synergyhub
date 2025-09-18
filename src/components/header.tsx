@@ -4,7 +4,7 @@
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, LogOut, User, Settings, LayoutGrid, PlusCircle, UserPlus, Mail, FolderKanban, ListChecks, MessageSquare } from "lucide-react";
+import { Search, LogOut, User, Settings, LayoutGrid, PlusCircle, UserPlus, Mail, FolderKanban, ListChecks, MessageSquare, Users as UsersIcon } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -38,6 +38,7 @@ const navItems = [
     { href: "/dashboard/tasks", label: "Tasks", icon: ListChecks },
     { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
     { href: "/dashboard/clients", label: "Clients", icon: User },
+    { href: "/dashboard/members", label: "Members", icon: UsersIcon },
     { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 

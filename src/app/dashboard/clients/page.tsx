@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import placeholderImages from "@/lib/placeholder-images.json";
 import { ClientDialog } from "@/components/clients/client-dialog";
-import type { Client } from "@/lib/types";
+import type { Client, ClientStatus } from "@/lib/types";
 
 const initialClients: Client[] = [
   {
@@ -27,7 +27,7 @@ const initialClients: Client[] = [
     logoUrl: "https://picsum.photos/seed/logo1/40/40",
     logoHint: "abstract logo",
     project: "Mobile App Redesign",
-    status: "In Progress",
+    status: "Active",
     progress: 75,
     team: [
       { name: "SL", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl! },
@@ -65,7 +65,7 @@ const initialClients: Client[] = [
     logoUrl: "https://picsum.photos/seed/logo4/40/40",
     logoHint: "mountain logo",
     project: "Data Analytics Dashboard",
-    status: "In Progress",
+    status: "Active",
     progress: 50,
     team: [
         { name: "DC", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageUrl! },
@@ -74,12 +74,11 @@ const initialClients: Client[] = [
   },
 ];
 
-const statusVariant: { [key: string]: "default" | "secondary" | "destructive" } = {
-  "In Progress": "default",
+const statusVariant: { [key in ClientStatus]: "default" | "secondary" | "destructive" | "outline" } = {
+  "Active": "default",
   "Completed": "secondary",
   "On Hold": "destructive",
   "Lead": "outline",
-  "Active": "default",
 };
 
 export default function ClientsPage() {
