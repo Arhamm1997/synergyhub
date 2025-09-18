@@ -66,30 +66,22 @@ export default function SignupPage() {
 
   return (
     <div className="w-full lg:grid lg:min-h-[100vh] lg:grid-cols-2 xl:min-h-[100vh]">
-      <div className="hidden bg-muted lg:block">
-        <Image
-          src="https://picsum.photos/seed/signup/1200/1800"
-          alt="Abstract art representing collaboration"
-          data-ai-hint="abstract collaboration"
-          width="1200"
-          height="1800"
-          className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-        />
-      </div>
-       <div className="flex items-center justify-center py-12">
+      <div className="flex items-center justify-center py-12">
         <div className="mx-auto grid w-[350px] gap-6">
-          <div className="grid gap-2 text-center">
+          <div className="grid gap-4 text-center">
             <Logo />
-            <h1 className="text-3xl font-bold">Create an Account</h1>
-            <p className="text-balance text-muted-foreground">
-              Enter your information to create an account
-            </p>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold">Create an Account</h1>
+              <p className="text-balance text-muted-foreground">
+                Join SynergyHub and start collaborating with your team.
+              </p>
+            </div>
           </div>
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">Sign Up</CardTitle>
               <CardDescription>
-                Create your SynergyHub account.
+                Fill in the details below to create your account.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -135,7 +127,7 @@ export default function SignupPage() {
                     )}
                   />
                   <Button type="submit" className="w-full">
-                    Sign Up
+                    Create Account
                   </Button>
                 </form>
               </Form>
@@ -148,6 +140,16 @@ export default function SignupPage() {
             </Link>
           </div>
         </div>
+      </div>
+      <div className="hidden bg-muted lg:block">
+        <Image
+          src="https://picsum.photos/seed/signup/1200/1800"
+          alt="Abstract art representing collaboration"
+          data-ai-hint="abstract collaboration"
+          width="1200"
+          height="1800"
+          className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+        />
       </div>
     </div>
   );
