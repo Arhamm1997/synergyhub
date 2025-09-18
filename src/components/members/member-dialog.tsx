@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, type ReactNode, useRef } from "react";
+import { useState, type ReactNode, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,13 +26,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { Member } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -49,27 +42,45 @@ const formSchema = z.object({
 type MemberFormValues = z.infer<typeof formSchema>;
 
 interface MemberDialogProps {
-  children: ReactNode;
+  children?: ReactNode;
   member?: Member;
-  onCreateMember: (member: Omit<Member, 'id'>) => void;
+  onSave: (member: Omit<Member, 'id'> | Member) => void;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function MemberDialog({ children, member, onCreateMember }: MemberDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(member?.avatarUrl || null);
+export function MemberDialog({ children, member, onSave, isOpen, onOpenChange }: MemberDialogProps) {
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<MemberFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: member?.name || "",
-      email: member?.email || "",
-      role: member?.role || "",
-      department: member?.department || "",
-      avatarUrl: member?.avatarUrl || "",
-      details: member?.details || "",
-    },
   });
+
+  useEffect(() => {
+    if (member) {
+      form.reset({
+        name: member.name,
+        email: member.email,
+        role: member.role,
+        department: member.department,
+        avatarUrl: member.avatarUrl,
+        details: member.details || "",
+      });
+      setAvatarPreview(member.avatarUrl);
+    } else {
+      form.reset({
+        name: "",
+        email: "",
+        role: "",
+        department: "",
+        avatarUrl: "",
+        details: "",
+      });
+      setAvatarPreview(null);
+    }
+  }, [member, form, isOpen]);
+
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -85,7 +96,7 @@ export function MemberDialog({ children, member, onCreateMember }: MemberDialogP
   };
 
   function onSubmit(values: MemberFormValues) {
-    const newMember = {
+    const memberData = {
       name: values.name,
       email: values.email,
       role: values.role,
@@ -94,21 +105,13 @@ export function MemberDialog({ children, member, onCreateMember }: MemberDialogP
       avatarUrl: values.avatarUrl || `https://picsum.photos/seed/${values.name.split(' ').join('')}/200/200`,
       avatarHint: "person portrait",
     };
-    onCreateMember(newMember);
-    form.reset();
-    setAvatarPreview(null);
-    setIsOpen(false);
+    onSave(member ? { ...member, ...memberData } : memberData);
+    onOpenChange(false);
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-        setIsOpen(open);
-        if (!open) {
-            form.reset();
-            setAvatarPreview(member?.avatarUrl || null);
-        }
-    }}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{member ? "Edit Member" : "Add New Member"}</DialogTitle>
@@ -207,7 +210,7 @@ export function MemberDialog({ children, member, onCreateMember }: MemberDialogP
             />
             
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button type="submit">{member ? "Save Changes" : "Add Member"}</Button>
             </DialogFooter>
           </form>

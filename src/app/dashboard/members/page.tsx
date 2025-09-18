@@ -15,8 +15,9 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import placeholderImages from "@/lib/placeholder-images.json";
-import type { Member, Department } from "@/lib/types";
+import type { Member } from "@/lib/types";
 import { MemberDialog } from "@/components/members/member-dialog";
+import { useChatStore } from "@/store/chat-store";
 
 const initialMembers: Member[] = [
   {
@@ -71,6 +72,9 @@ const departmentVariant: { [key: string]: "default" | "secondary" | "destructive
 
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>(initialMembers);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
+  const { openChat, setContact } = useChatStore();
 
   const handleCreateMember = (newMember: Omit<Member, 'id'>) => {
     const memberToAdd: Member = {
@@ -80,6 +84,26 @@ export default function MembersPage() {
     setMembers(prev => [memberToAdd, ...prev]);
   };
 
+  const handleUpdateMember = (updatedMember: Member) => {
+    setMembers(prev => prev.map(m => m.id === updatedMember.id ? updatedMember : m));
+    setEditingMember(null);
+  }
+
+  const handleOpenEditDialog = (member: Member) => {
+    setEditingMember(member);
+    setIsMemberDialogOpen(true);
+  }
+
+  const handleOpenChat = (member: Member) => {
+    setContact({ name: member.name, avatarUrl: member.avatarUrl, avatarHint: member.avatarHint, status: "Online" });
+    openChat();
+  }
+
+  const onDialogClose = () => {
+    setEditingMember(null);
+    setIsMemberDialogOpen(false);
+  }
+
   return (
     <div className="flex flex-col gap-4">
        <div className="flex items-center justify-between">
@@ -87,7 +111,11 @@ export default function MembersPage() {
             <h1 className="text-2xl font-bold">Team Members</h1>
             <p className="text-muted-foreground">Manage your team and their roles.</p>
          </div>
-         <MemberDialog onCreateMember={handleCreateMember}>
+         <MemberDialog 
+            onSave={handleCreateMember} 
+            isOpen={isMemberDialogOpen && !editingMember} 
+            onOpenChange={setIsMemberDialogOpen}
+        >
             <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Member
@@ -112,13 +140,21 @@ export default function MembersPage() {
               {member.details && <p className="text-xs">{member.details}</p>}
             </CardContent>
             <CardFooter className="flex justify-center gap-2">
-              <Button variant="outline" size="icon"><Mail className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={() => handleOpenChat(member)}><Mail className="h-4 w-4" /></Button>
               <Button variant="outline" size="icon"><Phone className="h-4 w-4" /></Button>
-              <Button variant="outline">View Profile</Button>
+              <Button variant="outline" onClick={() => handleOpenEditDialog(member)}>View Profile</Button>
             </CardFooter>
           </Card>
         ))}
       </div>
+      {editingMember && (
+        <MemberDialog
+            member={editingMember}
+            onSave={(editedMember) => handleUpdateMember({ ...editingMember, ...editedMember })}
+            isOpen={isMemberDialogOpen && !!editingMember}
+            onOpenChange={onDialogClose}
+        />
+      )}
     </div>
   );
 }
