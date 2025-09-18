@@ -1,4 +1,5 @@
 
+
 import type { LucideIcon } from "lucide-react";
 import type { Table } from "@tanstack/react-table";
 import type { Event } from 'react-big-calendar';
@@ -72,6 +73,16 @@ export interface Member {
     avatarUrl: string;
     avatarHint: string;
     details?: string;
+}
+
+export interface Business {
+  id: string;
+  name: string;
+  owner: Assignee;
+  phone: string;
+  type: string;
+  status: 'Active' | 'Inactive' | 'Lead';
+  notes: string;
 }
 
 

@@ -11,6 +11,7 @@ import {
   Settings,
   FolderKanban,
   Users as UsersIcon,
+  Building2,
 } from "lucide-react";
 
 import { Logo } from "@/components/logo";
@@ -31,6 +32,7 @@ const navItems = [
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
   { href: "/dashboard/clients", label: "Clients", icon: Users },
   { href: "/dashboard/members", label: "Members", icon: UsersIcon },
+  { href: "/dashboard/business", label: "My Business", icon: Building2 },
 ];
 
 const settingsNav = [
