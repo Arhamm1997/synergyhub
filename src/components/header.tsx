@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { NotificationPrioritizer } from "@/components/notifications/notification-prioritizer";
 import placeholderImages from "@/lib/placeholder-images.json";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
     { href: "/dashboard", label: "Dashboard" },
@@ -55,6 +56,7 @@ export function Header() {
           </div>
         </form>
         <NotificationPrioritizer />
+        <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
