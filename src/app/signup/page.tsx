@@ -27,62 +27,59 @@ import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/logo";
 import { useToast } from "@/hooks/use-toast";
 
-const formSchema = z.object({
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
-  password: z.string().min(8, {
-    message: "Password must be at least 8 characters.",
-  }),
-});
+const formSchema = z
+  .object({
+    email: z.string().email({
+      message: "Please enter a valid email address.",
+    }),
+    password: z.string().min(8, {
+      message: "Password must be at least 8 characters.",
+    }),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"],
+  });
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
-  
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
       password: "",
+      confirmPassword: "",
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // Mock login logic
+    // Mock signup logic
     toast({
-      title: "Login Successful",
-      description: "Welcome back! Redirecting to your dashboard.",
+      title: "Account Created",
+      description: "You have been successfully signed up! Redirecting to dashboard.",
     });
     router.push("/dashboard");
   }
 
   return (
     <div className="w-full lg:grid lg:min-h-[100vh] lg:grid-cols-2 xl:min-h-[100vh]">
-      <div className="hidden bg-muted lg:block">
-        <Image
-          src="https://picsum.photos/seed/synergy/1200/1800"
-          alt="Abstract art representing synergy"
-          data-ai-hint="abstract art"
-          width="1200"
-          height="1800"
-          className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-        />
-      </div>
-      <div className="flex items-center justify-center py-12">
+       <div className="flex items-center justify-center py-12">
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
             <Logo />
-            <h1 className="text-3xl font-bold">Welcome to SynergyHub</h1>
+            <h1 className="text-3xl font-bold">Create an Account</h1>
             <p className="text-balance text-muted-foreground">
-              Enter your credentials to access your account
+              Enter your information to create an account
             </p>
           </div>
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">Login</CardTitle>
+              <CardTitle className="text-2xl">Sign Up</CardTitle>
               <CardDescription>
-                Use your registered email and password to sign in.
+                Create your SynergyHub account.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -106,15 +103,20 @@ export default function LoginPage() {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <div className="flex items-center">
-                          <FormLabel>Password</FormLabel>
-                          <Link
-                            href="#"
-                            className="ml-auto inline-block text-sm underline"
-                          >
-                            Forgot your password?
-                          </Link>
-                        </div>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="********" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm Password</FormLabel>
                         <FormControl>
                           <Input type="password" placeholder="********" {...field} />
                         </FormControl>
@@ -123,19 +125,29 @@ export default function LoginPage() {
                     )}
                   />
                   <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
-                    Login
+                    Sign Up
                   </Button>
                 </form>
               </Form>
             </CardContent>
           </Card>
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="underline">
-              Sign up
+            Already have an account?{" "}
+            <Link href="/" className="underline">
+              Login
             </Link>
           </div>
         </div>
+      </div>
+      <div className="hidden bg-muted lg:block">
+        <Image
+          src="https://picsum.photos/seed/signup/1200/1800"
+          alt="Abstract art representing collaboration"
+          data-ai-hint="abstract collaboration"
+          width="1200"
+          height="1800"
+          className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+        />
       </div>
     </div>
   );
