@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, useRef } from "react";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -34,13 +35,14 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { Member } from "@/lib/types";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 const formSchema = z.object({
   name: z.string().min(1, "Member name is required"),
   email: z.string().email("Please enter a valid email address"),
   role: z.string().min(1, "Role is required"),
   department: z.string().min(1, "Department is required"),
-  avatarUrl: z.string().url("Please enter a valid image URL.").optional().or(z.literal('')),
+  avatarUrl: z.string().optional(),
   details: z.string().optional(),
 });
 
@@ -54,6 +56,9 @@ interface MemberDialogProps {
 
 export function MemberDialog({ children, member, onCreateMember }: MemberDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(member?.avatarUrl || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const form = useForm<MemberFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -65,6 +70,19 @@ export function MemberDialog({ children, member, onCreateMember }: MemberDialogP
       details: member?.details || "",
     },
   });
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setAvatarPreview(result);
+        form.setValue('avatarUrl', result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   function onSubmit(values: MemberFormValues) {
     const newMember = {
@@ -78,11 +96,18 @@ export function MemberDialog({ children, member, onCreateMember }: MemberDialogP
     };
     onCreateMember(newMember);
     form.reset();
+    setAvatarPreview(null);
     setIsOpen(false);
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+        setIsOpen(open);
+        if (!open) {
+            form.reset();
+            setAvatarPreview(member?.avatarUrl || null);
+        }
+    }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
@@ -93,6 +118,26 @@ export function MemberDialog({ children, member, onCreateMember }: MemberDialogP
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+             <div className="flex items-center gap-4">
+                <Avatar className="h-20 w-20">
+                    {avatarPreview ? (
+                        <AvatarImage src={avatarPreview} alt="Avatar preview" />
+                    ) : (
+                        <AvatarFallback>{form.getValues('name')?.substring(0, 2) || '??'}</AvatarFallback>
+                    )}
+                </Avatar>
+                <div className="flex-grow">
+                    <FormLabel>Profile Picture</FormLabel>
+                    <FormControl>
+                        <Input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleAvatarChange} />
+                    </FormControl>
+                     <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full mt-2">
+                        Upload Picture
+                    </Button>
+                     <FormMessage>{form.formState.errors.avatarUrl?.message}</FormMessage>
+                </div>
+            </div>
+
             <FormField
               control={form.control}
               name="name"
@@ -147,19 +192,6 @@ export function MemberDialog({ children, member, onCreateMember }: MemberDialogP
                 )}
               />
             </div>
-             <FormField
-                control={form.control}
-                name="avatarUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Avatar URL (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://example.com/avatar.png" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
              <FormField
               control={form.control}
               name="details"
