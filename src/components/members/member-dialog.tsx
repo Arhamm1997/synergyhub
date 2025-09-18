@@ -42,6 +42,7 @@ const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   role: z.string().min(1, "Role is required"),
   department: z.enum(departments),
+  avatarUrl: z.string().url("Please enter a valid image URL.").optional().or(z.literal('')),
   details: z.string().optional(),
 });
 
@@ -62,6 +63,7 @@ export function MemberDialog({ children, member, onCreateMember }: MemberDialogP
       email: member?.email || "",
       role: member?.role || "",
       department: member?.department || "Engineering",
+      avatarUrl: member?.avatarUrl || "",
       details: member?.details || "",
     },
   });
@@ -73,7 +75,7 @@ export function MemberDialog({ children, member, onCreateMember }: MemberDialogP
       role: values.role,
       department: values.department,
       details: values.details,
-      avatarUrl: `https://picsum.photos/seed/${values.name.split(' ').join('')}/200/200`,
+      avatarUrl: values.avatarUrl || `https://picsum.photos/seed/${values.name.split(' ').join('')}/200/200`,
       avatarHint: "person portrait",
     };
     onCreateMember(newMember);
@@ -154,6 +156,19 @@ export function MemberDialog({ children, member, onCreateMember }: MemberDialogP
                 )}
               />
             </div>
+             <FormField
+                control={form.control}
+                name="avatarUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Avatar URL (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://example.com/avatar.png" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
              <FormField
               control={form.control}
               name="details"
