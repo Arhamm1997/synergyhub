@@ -355,6 +355,16 @@ export function ProjectTaskView({ initialTasks: projectTasks, title }: { initial
     }
   };
 
+  const handleBulkDelete = () => {
+    const selectedTaskIds = table.getFilteredSelectedRowModel().rows.map(row => row.original.id);
+    setTasks(prev => prev.filter(t => !selectedTaskIds.includes(t.id)));
+    table.resetRowSelection();
+    toast({
+        title: `${selectedTaskIds.length} Tasks Deleted`,
+        description: "The selected tasks have been successfully deleted.",
+    });
+  }
+
 
   const table = useReactTable({
     data: tasks,
@@ -444,14 +454,38 @@ export function ProjectTaskView({ initialTasks: projectTasks, title }: { initial
               <TabsTrigger value="calendar" className="gap-2"><CalendarIcon /> <span className="hidden sm:inline">Calendar</span></TabsTrigger>
             </TabsList>
              {activeTab === 'grid' && (
-              <Input
-                placeholder="Filter tasks by title..."
-                value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-                onChange={(event) =>
-                  table.getColumn("title")?.setFilterValue(event.target.value)
-                }
-                className="max-w-xs"
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Filter tasks by title..."
+                  value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+                  onChange={(event) =>
+                    table.getColumn("title")?.setFilterValue(event.target.value)
+                  }
+                  className="max-w-xs"
+                />
+                 {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete ({table.getFilteredSelectedRowModel().rows.length})
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete {table.getFilteredSelectedRowModel().rows.length} tasks.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleBulkDelete}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                 )}
+              </div>
             )}
           </div>
           
@@ -576,3 +610,5 @@ export function ProjectTaskView({ initialTasks: projectTasks, title }: { initial
     </>
   );
 }
+
+    

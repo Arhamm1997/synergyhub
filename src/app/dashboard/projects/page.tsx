@@ -1,14 +1,25 @@
 
 "use client"
 
-import { useState } from "react";
+import * as React from "react";
 import Link from "next/link";
-import { PlusCircle, MoreVertical, FolderKanban } from "lucide-react";
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { PlusCircle, MoreVertical, Trash2, ArrowUpDown, ChevronDown } from "lucide-react";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -19,25 +30,213 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import type { Project, ProjectStatus } from "@/lib/types";
 import { ProjectDialog } from "@/components/projects/project-dialog";
 import { initialProjects } from "@/lib/project-data";
+import { useToast } from "@/hooks/use-toast";
 
-const statusVariant: { [key: string]: "default" | "secondary" | "destructive" } = {
-  "In Progress": "default",
-  "Completed": "secondary",
-  "On Hold": "destructive",
-};
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
+  const { toast } = useToast();
+  const [projects, setProjects] = React.useState<Project[]>(initialProjects);
+  const [editingProject, setEditingProject] = React.useState<Project | null>(null);
+  const [isProjectDialogOpen, setIsProjectDialogOpen] = React.useState(false);
+  
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = React.useState({});
+
+  const handleDeleteProject = (projectId: string) => {
+    setProjects(prev => prev.filter(p => p.id !== projectId));
+    toast({ title: "Project Deleted", description: "The project has been successfully deleted." });
+  };
+  
+  const handleBulkDelete = () => {
+    const selectedProjectIds = table.getFilteredSelectedRowModel().rows.map(row => row.original.id);
+    setProjects(prev => prev.filter(p => !selectedProjectIds.includes(p.id)));
+    table.resetRowSelection();
+    toast({ title: `${selectedProjectIds.length} Projects Deleted`, description: "The selected projects have been successfully deleted." });
+  }
+
+  const columns: ColumnDef<Project>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "name",
+      header: "Project",
+      cell: ({ row }) => (
+        <div className="font-medium">
+            <Link href={`/dashboard/projects/${row.original.id}`} className="hover:underline">
+                {row.getValue("name")}
+            </Link>
+             <div className="text-sm text-muted-foreground md:hidden">{row.original.client}</div>
+        </div>
+      )
+    },
+    {
+      accessorKey: "client",
+      header: "Client",
+    },
+    {
+      accessorKey: "status",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Status
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const status: ProjectStatus = row.getValue("status");
+        const statusVariant: { [key in ProjectStatus]: "default" | "secondary" | "destructive" | "outline" } = {
+          "Not Started": "outline",
+          "In Progress": "default",
+          "On Hold": "destructive",
+          "Completed": "secondary",
+          "Cancelled": "destructive"
+        };
+        return <Badge variant={statusVariant[status] || 'outline'}>{status}</Badge>;
+      }
+    },
+    {
+        accessorKey: "team",
+        header: "Team",
+        cell: ({row}) => (
+            <div className="flex -space-x-2">
+                {row.original.team.map((member, index) => (
+                    <Avatar key={index} className="h-8 w-8 border-2 border-card">
+                        <AvatarImage src={member.avatarUrl} alt={member.name} />
+                        <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
+                    </Avatar>
+                ))}
+            </div>
+        )
+    },
+    {
+      accessorKey: "progress",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Progress
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+            <Progress value={row.getValue("progress")} className="w-24" />
+            <span className="text-muted-foreground">{row.getValue("progress")}%</span>
+        </div>
+      )
+    },
+    {
+        accessorKey: "deadline",
+        header: "Deadline"
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const project = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/projects/${project.id}`}>View Details</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleOpenEditDialog(project)}>Edit Project</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                       <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                          Delete Project
+                      </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                      <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the project "{project.name}".
+                      </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteProject(project.id)}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                  </AlertDialogContent>
+              </AlertDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
+  const table = useReactTable({
+    data: projects,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+  });
 
   const handleCreateProject = (newProject: Omit<Project, 'id' | 'progress' | 'tasks'>) => {
     const projectToAdd: Project = {
@@ -59,107 +258,179 @@ export default function ProjectsPage() {
     setIsProjectDialogOpen(true);
   }
 
-  const handleDeleteProject = (projectId: string) => {
-    setProjects(prev => prev.filter(p => p.id !== projectId));
-  }
-  
   const onDialogClose = () => {
     setEditingProject(null);
     setIsProjectDialogOpen(false);
   }
 
   return (
-    <div className="flex flex-col gap-4">
-       <div className="flex items-center justify-between">
-         <div>
-            <h1 className="text-2xl font-bold">Projects</h1>
-            <p className="text-muted-foreground">Manage all your projects and their progress.</p>
-         </div>
-        <ProjectDialog 
-            onSave={handleCreateProject} 
-            isOpen={isProjectDialogOpen && !editingProject} 
-            onOpenChange={setIsProjectDialogOpen}
-        >
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add New Project
-          </Button>
-        </ProjectDialog>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {projects.map((project) => (
-          <Card key={project.id}>
-            <CardHeader className="flex flex-row items-start justify-between">
-              <div className="flex items-center gap-4">
-                 <div className="p-3 rounded-md bg-muted">
-                    <FolderKanban className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <div>
-                  <CardTitle>{project.name}</CardTitle>
-                  <CardDescription>Client: {project.client}</CardDescription>
-                </div>
-              </div>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
+    <Card className="h-full flex flex-col">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+            <div>
+                <CardTitle>Projects</CardTitle>
+                <CardDescription>
+                    Manage all your projects and their progress.
+                </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+                <ProjectDialog 
+                    onSave={handleCreateProject} 
+                    isOpen={isProjectDialogOpen && !editingProject} 
+                    onOpenChange={setIsProjectDialogOpen}
+                >
+                  <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add New Project
+                  </Button>
+                </ProjectDialog>
+            </div>
+        </div>
+      </CardHeader>
+      <CardContent className="flex-grow flex flex-col">
+          <div className="flex items-center py-4 gap-2">
+            <Input
+              placeholder="Filter projects by name..."
+              value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+              onChange={(event) =>
+                table.getColumn("name")?.setFilterValue(event.target.value)
+              }
+              className="max-w-sm"
+            />
+            {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="ml-auto">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete ({table.getFilteredSelectedRowModel().rows.length})
                         </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/projects/${project.id}`}>View Details</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleOpenEditDialog(project)}>Edit Project</DropdownMenuItem>
-                        <DropdownMenuItem>Archive Project</DropdownMenuItem>
-                        <DropdownMenuItem 
-                            className="text-destructive"
-                            onClick={() => handleDeleteProject(project.id)}
-                        >
-                            Delete Project
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                 <Badge variant={statusVariant[project.status] || 'outline'}>{project.status}</Badge>
-                 <div className="flex -space-x-2">
-                    {project.team.map((member, index) => (
-                        <Avatar key={index} className="h-8 w-8 border-2 border-card">
-                            <AvatarImage src={member.avatarUrl} alt={member.name} />
-                            <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
-                        </Avatar>
-                    ))}
-                 </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-sm text-muted-foreground mb-1">
-                    <span>Progress</span>
-                    <span>{project.progress}%</span>
-                </div>
-                <Progress value={project.progress} />
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Deadline: {project.deadline}</span>
-               <Button variant="outline" asChild>
-                  <Link href={`/dashboard/projects/${project.id}`}>View Details</Link>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete {table.getFilteredSelectedRowModel().rows.length} projects.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleBulkDelete}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="ml-auto">
+                  Columns <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => {
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="capitalize"
+                        checked={column.getIsVisible()}
+                        onCheckedChange={(value) =>
+                          column.toggleVisibility(!!value)
+                        }
+                      >
+                        {column.id}
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="rounded-md border flex-grow">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      return (
+                        <TableHead key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </TableHead>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex items-center justify-end space-x-2 py-4">
+            <div className="flex-1 text-sm text-muted-foreground">
+              {table.getFilteredSelectedRowModel().rows.length} of{" "}
+              {table.getFilteredRowModel().rows.length} row(s) selected.
+            </div>
+            <div className="space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                Previous
               </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+      </CardContent>
       {editingProject && (
         <ProjectDialog
             project={editingProject}
-            onSave={(editedProject) => handleUpdateProject({ ...editingProject, ...(editedProject as Omit<Project, 'id' | 'tasks'>) })}
+            onSave={(editedProject) => handleUpdateProject({ ...editingProject, ...(editedProject as Omit<Project, 'id' | 'tasks' | 'progress'>) })}
             isOpen={isProjectDialogOpen && !!editingProject}
             onOpenChange={onDialogClose}
         />
       )}
-    </div>
+    </Card>
   );
 }
+
+    
