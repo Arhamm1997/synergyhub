@@ -27,33 +27,17 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import type { Task, Priority, TaskStatus } from "@/lib/types";
 import placeholderImages from "@/lib/placeholder-images.json";
 
-const priorities: Priority[] = ["Urgent", "High", "Medium", "Low", "None"];
-const statuses: TaskStatus[] = ["Backlog", "Todo", "In Progress", "In Review", "Done", "Cancelled"];
-const assignees = [
-    { name: "Alex Moran", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl!, avatarHint: "man portrait" },
-    { name: "Sarah Lee", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!, avatarHint: "woman portrait" },
-    { name: "David Chen", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageUrl!, avatarHint: "man portrait professional" },
-    { name: "Maria Rodriguez", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageUrl!, avatarHint: "woman professional" },
-];
-
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   assigneeName: z.string().min(1, "Assignee is required"),
-  priority: z.enum(["Urgent", "High", "Medium", "Low", "None"]),
-  status: z.enum(["Backlog", "Todo", "In Progress", "In Review", "Done", "Cancelled"]),
+  priority: z.string().min(1, "Priority is required"),
+  status: z.string().min(1, "Status is required"),
   dueDate: z.date({ required_error: "Due date is required." }),
 });
 
@@ -77,16 +61,18 @@ export function CreateTaskDialog({ onCreate, children }: CreateTaskDialogProps) 
   });
 
   function onSubmit(values: CreateTaskFormValues) {
-    const selectedAssignee = assignees.find(a => a.name === values.assigneeName);
-    if (!selectedAssignee) return;
-
     const newTask: Task = {
       id: `TASK-${Math.floor(Math.random() * 10000)}`,
       title: values.title,
       description: values.description,
-      assignee: selectedAssignee,
-      priority: values.priority,
-      status: values.status,
+      assignee: {
+        name: values.assigneeName,
+        // Using a random avatar for manually added assignees
+        avatarUrl: `https://picsum.photos/seed/${values.assigneeName}/40/40`,
+        avatarHint: "person avatar",
+      },
+      priority: values.priority as Priority,
+      status: values.status as TaskStatus,
       dueDate: format(values.dueDate, "yyyy-MM-dd"),
     };
     onCreate(newTask);
@@ -151,16 +137,9 @@ export function CreateTaskDialog({ onCreate, children }: CreateTaskDialogProps) 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Assignee</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select an assignee" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {assignees.map(a => <SelectItem key={a.name} value={a.name}>{a.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input placeholder="e.g. Alex Moran" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -171,16 +150,9 @@ export function CreateTaskDialog({ onCreate, children }: CreateTaskDialogProps) 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Priority</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select priority" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {priorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input placeholder="e.g. High" {...field} />
+                    </FormControl>
                      <FormMessage />
                   </FormItem>
                 )}
@@ -193,16 +165,9 @@ export function CreateTaskDialog({ onCreate, children }: CreateTaskDialogProps) 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                     <FormControl>
+                      <Input placeholder="e.g. In Progress" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -229,5 +194,3 @@ export function CreateTaskDialog({ onCreate, children }: CreateTaskDialogProps) 
     </Dialog>
   );
 }
-
-    

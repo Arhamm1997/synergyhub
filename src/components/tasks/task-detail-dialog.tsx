@@ -32,13 +32,6 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -47,21 +40,12 @@ import type { Task, Priority, TaskStatus } from "@/lib/types";
 import placeholderImages from "@/lib/placeholder-images.json";
 import { useToast } from "@/hooks/use-toast";
 
-const priorities: Priority[] = ["Urgent", "High", "Medium", "Low", "None"];
-const statuses: TaskStatus[] = ["Backlog", "Todo", "In Progress", "In Review", "Done", "Cancelled"];
-const assignees = [
-    { name: "Alex Moran", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl!, avatarHint: "man portrait" },
-    { name: "Sarah Lee", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!, avatarHint: "woman portrait" },
-    { name: "David Chen", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageUrl!, avatarHint: "man portrait professional" },
-    { name: "Maria Rodriguez", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageUrl!, avatarHint: "woman professional" },
-];
-
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   assigneeName: z.string().min(1, "Assignee is required"),
-  priority: z.enum(["Urgent", "High", "Medium", "Low", "None"]),
-  status: z.enum(["Backlog", "Todo", "In Progress", "In Review", "Done", "Cancelled"]),
+  priority: z.string().min(1, "Priority is required"),
+  status: z.string().min(1, "Status is required"),
   dueDate: z.date({ required_error: "Due date is required." }),
 });
 
@@ -91,14 +75,17 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask }: Tas
   });
 
   const onSubmit = (values: TaskFormValues) => {
-    const selectedAssignee = assignees.find(a => a.name === values.assigneeName);
-    if (!selectedAssignee) return;
-
     const updatedTask: Task = {
       ...task,
       ...values,
-      assignee: selectedAssignee,
+      assignee: {
+        name: values.assigneeName,
+        avatarUrl: task.assignee.avatarUrl,
+        avatarHint: task.assignee.avatarHint,
+      },
       dueDate: format(values.dueDate, "yyyy-MM-dd"),
+      priority: values.priority as Priority,
+      status: values.status as TaskStatus
     };
     onUpdateTask(updatedTask);
     onOpenChange(false);
@@ -180,16 +167,9 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask }: Tas
                     render={({ field }) => (
                     <FormItem className="flex items-center">
                         <FormLabel className="w-24 flex items-center gap-2 text-muted-foreground"><User className="h-4 w-4" /> Assignee</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                            <SelectTrigger>
-                            <SelectValue placeholder="Select assignee" />
-                            </SelectTrigger>
+                           <Input placeholder="Select assignee" {...field} />
                         </FormControl>
-                        <SelectContent>
-                            {assignees.map(a => <SelectItem key={a.name} value={a.name}>{a.name}</SelectItem>)}
-                        </SelectContent>
-                        </Select>
                     </FormItem>
                     )}
                 />
@@ -209,16 +189,9 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask }: Tas
                     render={({ field }) => (
                     <FormItem className="flex items-center">
                         <FormLabel className="w-24 flex items-center gap-2 text-muted-foreground"><CheckCircle className="h-4 w-4" /> Status</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
+                         <FormControl>
+                           <Input placeholder="Select status" {...field} />
                         </FormControl>
-                        <SelectContent>
-                            {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                        </SelectContent>
-                        </Select>
                     </FormItem>
                     )}
                 />
@@ -228,16 +201,9 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask }: Tas
                     render={({ field }) => (
                     <FormItem className="flex items-center">
                         <FormLabel className="w-24 flex items-center gap-2 text-muted-foreground"><Flag className="h-4 w-4" /> Priority</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                            <SelectTrigger>
-                            <SelectValue placeholder="Select priority" />
-                            </SelectTrigger>
+                           <Input placeholder="Select priority" {...field} />
                         </FormControl>
-                        <SelectContent>
-                            {priorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                        </SelectContent>
-                        </Select>
                     </FormItem>
                     )}
                 />
@@ -250,5 +216,3 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask }: Tas
     </Dialog>
   );
 }
-
-    
