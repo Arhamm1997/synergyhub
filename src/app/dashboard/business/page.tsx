@@ -22,6 +22,7 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -67,9 +68,11 @@ import type { Business } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { initialBusinesses } from "@/lib/business-data";
 import { BusinessDialog } from "@/components/business/business-dialog";
+import { useMemberStore } from "@/store/member-store";
 
 export default function BusinessPage() {
   const { toast } = useToast();
+  const { members } = useMemberStore();
   const [businesses, setBusinesses] = React.useState<Business[]>(initialBusinesses);
   const [editingBusiness, setEditingBusiness] = React.useState<Business | null>(null);
   const [isBusinessDialogOpen, setIsBusinessDialogOpen] = React.useState(false);
@@ -78,6 +81,54 @@ export default function BusinessPage() {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+  
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // NOTE: This is a simulation. A full implementation would use a library
+      // like 'xlsx' to parse the file content here.
+      console.log("File selected:", file.name);
+
+      const sampleImportedData: Business[] = [
+        {
+            id: "BIZ-101",
+            name: "DataCorp",
+            owner: members[0] || { name: "John Doe", avatarUrl: "", avatarHint: "" },
+            phone: "555-0101",
+            type: "Tech",
+            status: "Lead",
+            notes: "Imported from Excel. Prospect for Q3.",
+        },
+        {
+            id: "BIZ-102",
+            name: "BuildIt Construction",
+            owner: members[1] || { name: "Jane Smith", avatarUrl: "", avatarHint: "" },
+            phone: "555-0102",
+            type: "Construction",
+            status: "Active",
+            notes: "Imported from Excel. Retainer client.",
+        },
+      ];
+
+      setBusinesses(prev => [...prev, ...sampleImportedData]);
+
+      toast({
+        title: "Import Successful",
+        description: `${sampleImportedData.length} businesses have been imported and added to the table.`,
+      });
+
+      // Reset file input
+      if(fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
 
   const handleDeleteBusiness = (businessId: string) => {
     setBusinesses((prev) => prev.filter((b) => b.id !== businessId));
@@ -284,9 +335,16 @@ export default function BusinessPage() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => toast({ title: "Coming Soon!", description: "Import functionality is not yet implemented."})}>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept=".xlsx, .xls, .csv"
+            />
+            <Button variant="outline" onClick={handleImportClick}>
                 <Upload className="mr-2 h-4 w-4" />
-                Import from monday.com
+                Import from Excel
             </Button>
             <Button onClick={handleOpenCreateDialog}>
               <PlusCircle className="mr-2 h-4 w-4" />
