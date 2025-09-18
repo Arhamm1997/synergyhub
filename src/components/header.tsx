@@ -1,0 +1,87 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+import { Search, LogOut, User, Settings, LayoutGrid } from "lucide-react";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { NotificationPrioritizer } from "@/components/notifications/notification-prioritizer";
+import placeholderImages from "@/lib/placeholder-images.json";
+
+const navItems = [
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/dashboard/tasks", label: "Tasks" },
+    { href: "/dashboard/messages", label: "Messages" },
+    { href: "/dashboard/clients", label: "Clients" },
+    { href: "/dashboard/settings", label: "Settings" },
+];
+
+export function Header() {
+  const pathname = usePathname();
+  const userAvatar = placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1');
+
+  const getPageTitle = () => {
+    const currentNav = navItems.find(item => pathname.startsWith(item.href));
+    return currentNav ? currentNav.label : "SynergyHub";
+  };
+  
+  return (
+    <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30">
+      <SidebarTrigger className="md:hidden" />
+      <div className="w-full flex-1">
+        <h1 className="font-semibold text-lg">{getPageTitle()}</h1>
+      </div>
+      <div className="flex flex-1 items-center justify-end gap-4 md:ml-auto md:gap-2 lg:gap-4">
+        <form className="ml-auto flex-1 sm:flex-initial hidden md:block">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search tasks, projects..."
+              className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
+            />
+          </div>
+        </form>
+        <NotificationPrioritizer />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <Avatar className="h-8 w-8">
+                 {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt="User avatar" data-ai-hint={userAvatar.imageHint} />}
+                <AvatarFallback>AM</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">Alex Moran</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  Team Lead
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild><Link href="/dashboard"><LayoutGrid />Dashboard</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link href="/dashboard/settings"><User />Profile</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings />Settings</Link></DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild><Link href="/"><LogOut />Log out</Link></DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </header>
+  );
+}
