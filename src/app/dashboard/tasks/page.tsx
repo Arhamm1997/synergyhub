@@ -303,28 +303,34 @@ export default function TasksPage() {
   const [rowSelection, setRowSelection] = React.useState({});
 
   const onDragEnd = (result: DropResult) => {
-    const { source, destination } = result;
+    const { source, destination, draggableId } = result;
 
     if (!destination) return;
+    
+    // If dropped in the same place, do nothing
+    if (source.droppableId === destination.droppableId && source.index === destination.index) {
+        return;
+    }
 
-    const newTasks = Array.from(tasks);
-    const [movedTask] = newTasks.splice(source.index, 1);
-    
-    // Update status based on destination column
-    const newStatus = destination.droppableId as TaskStatus;
-    movedTask.status = newStatus;
-    
-    // Find the correct index to insert in the new list
-    const destinationTasks = newTasks.filter(t => t.status === newStatus);
-    const destinationIndex = destination.index <= destinationTasks.length ? destination.index : destinationTasks.length;
-    
-    const tasksInSameColumn = newTasks.filter(t => t.status === newStatus);
-    
-    const allOtherTasks = newTasks.filter(t => t.status !== newStatus);
-    
-    tasksInSameColumn.splice(destinationIndex, 0, movedTask);
+    setTasks(prevTasks => {
+        const newTasks = [...prevTasks];
+        const taskToMove = newTasks.find(t => t.id === draggableId);
+        
+        if (!taskToMove) return prevTasks;
 
-    setTasks([...allOtherTasks, ...tasksInSameColumn]);
+        // Update status based on destination column
+        taskToMove.status = destination.droppableId as TaskStatus;
+
+        // Reorder tasks
+        const reorderedTasks = newTasks.filter(t => t.id !== draggableId);
+        
+        const destinationTasks = reorderedTasks.filter(t => t.status === destination.droppableId);
+        const otherTasks = reorderedTasks.filter(t => t.status !== destination.droppableId);
+        
+        destinationTasks.splice(destination.index, 0, taskToMove);
+
+        return [...otherTasks, ...destinationTasks];
+    });
 };
 
 
