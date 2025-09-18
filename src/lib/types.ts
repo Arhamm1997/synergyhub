@@ -17,6 +17,7 @@ export interface Assignee {
 }
 
 export interface Contact {
+  id: string;
   name:string;
   avatarUrl?: string;
   avatarHint?: string;

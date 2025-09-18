@@ -7,7 +7,8 @@ import {
   Phone,
   Search,
   Users as UsersIcon,
-  ArrowLeft
+  ArrowLeft,
+  MessageSquarePlus,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -24,13 +25,16 @@ import placeholderImages from "@/lib/placeholder-images.json";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
-import type { Contact } from "@/lib/types";
+import type { Contact, Member } from "@/lib/types";
 import { ChatPanelContent } from "@/components/messages/chat-panel";
 import { useChatStore } from "@/store/chat-store";
+import { initialMembers } from "@/lib/member-data";
+import { NewMessageDialog } from "@/components/messages/new-message-dialog";
 
 
 const contacts: Contact[] = [
    {
+    id: "1",
     name: "Alex Moran",
     avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl!,
     avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageHint!,
@@ -40,6 +44,7 @@ const contacts: Contact[] = [
     status: "Online",
   },
   {
+    id: "2",
     name: "Sarah Lee",
     avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!,
     avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageHint!,
@@ -49,6 +54,7 @@ const contacts: Contact[] = [
     status: "Online",
   },
   {
+    id: "3",
     name: "David Chen",
     avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageUrl!,
     avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageHint!,
@@ -58,6 +64,7 @@ const contacts: Contact[] = [
     status: "Away",
   },
   {
+    id: "4",
     name: "Maria Rodriguez",
     avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageUrl!,
     avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageHint!,
@@ -67,6 +74,7 @@ const contacts: Contact[] = [
     status: "Offline",
   },
   {
+    id: "GROUP-1",
     name: "Project Phoenix Team",
     isGroup: true,
     lastMessage: "Alex: Let's sync at 3 PM today.",
@@ -99,16 +107,45 @@ export default function MessagesPage() {
   const handleContactClick = (contact: Contact) => {
     setActiveContact(contact);
     setShowChat(true);
-    // On larger screens, this will just highlight. On mobile, it shows the chat.
-    // For consistency, we can also use the global chat store here if needed.
   }
+
+  const handleNewMessageSelect = (member: Member) => {
+    const existingContact = contacts.find(c => c.id === member.id);
+    if (existingContact) {
+      setActiveContact(existingContact);
+    } else {
+      // Create a new contact object from the member
+      const newContact: Contact = {
+        id: member.id,
+        name: member.name,
+        avatarUrl: member.avatarUrl,
+        avatarHint: member.avatarHint,
+        status: "Online", // Assuming online status for new chat
+        lastMessage: "Started a new chat",
+        time: "Just now",
+        unread: 0,
+      };
+      // For this demo, we'll just set it as active. 
+      // In a real app, you'd add it to the contacts list.
+      setActiveContact(newContact);
+    }
+    setShowChat(true);
+  }
+
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] lg:grid-cols-[350px_1fr] h-[calc(100vh-100px)] gap-4">
       {/* Contacts List */}
       <Card className={cn("flex-col", showChat ? "hidden md:flex" : "flex")}>
         <CardHeader className="p-4">
-          <CardTitle>Chats</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Chats</CardTitle>
+            <NewMessageDialog members={initialMembers} onSelect={handleNewMessageSelect}>
+              <Button variant="ghost" size="icon">
+                <MessageSquarePlus className="h-5 w-5" />
+              </Button>
+            </NewMessageDialog>
+          </div>
           <div className="relative mt-2">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Search messages..." className="pl-8 w-full" />
@@ -172,7 +209,7 @@ export default function MessagesPage() {
             <CardHeader>
               <CardTitle>Select a chat</CardTitle>
               <CardDescription>
-                Choose a conversation from the left to start messaging.
+                Choose a conversation from the left or start a new one.
               </CardDescription>
             </CardHeader>
           </Card>
