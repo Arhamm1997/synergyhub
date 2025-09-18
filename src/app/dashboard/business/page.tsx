@@ -65,14 +65,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { Business } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { initialBusinesses } from "@/lib/business-data";
 import { BusinessDialog } from "@/components/business/business-dialog";
 import { useMemberStore } from "@/store/member-store";
 
 export default function BusinessPage() {
   const { toast } = useToast();
   const { members } = useMemberStore();
-  const [businesses, setBusinesses] = React.useState<Business[]>(initialBusinesses);
+  const [businesses, setBusinesses] = React.useState<Business[]>([]);
   const [editingBusiness, setEditingBusiness] = React.useState<Business | null>(null);
   const [isBusinessDialogOpen, setIsBusinessDialogOpen] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -103,17 +102,17 @@ export default function BusinessPage() {
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json<any>(worksheet);
+        const json = XLSX.utils.sheet_to_json<any>(worksheet, { defval: "" });
 
         const newBusinesses: Business[] = json.map((row: any, index: number) => {
-           // Find owner by name, or default to the first member
-          const owner = members.find(m => m.name === row.Owner) || members[0];
+           // Find owner by name, or use a default structure if not found
+          const owner = members.find(m => m.name === row.Owner);
           return ({
           id: `IMPORT-${Date.now()}-${index}`,
-          name: row['Business Name'] || 'Unnamed Business',
-          owner: owner,
-          phone: row['Phone Number'] || 'N/A',
-          type: row['Business Type'] || 'N/A',
+          name: row['Business Name'] || '',
+          owner: owner || { name: row.Owner || '', avatarUrl: '', avatarHint: 'person' },
+          phone: row['Phone Number'] || '',
+          type: row['Business Type'] || '',
           status: ['Active', 'Inactive', 'Lead'].includes(row.Status) ? row.Status : 'Lead',
           notes: row.Notes || '',
         })});
@@ -495,5 +494,3 @@ export default function BusinessPage() {
     </Card>
   );
 }
-
-  
