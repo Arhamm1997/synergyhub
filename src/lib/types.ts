@@ -79,6 +79,13 @@ export interface TaskEvent extends Event {
     resource: Task;
 }
 
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  start: Date;
+  end: Date;
+  description?: string;
+}
 
 export interface SummaryStat {
   title: string;

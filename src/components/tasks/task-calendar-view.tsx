@@ -3,16 +3,17 @@
 
 import * as React from "react";
 import { format, parseISO } from "date-fns";
-import { Calendar, momentLocalizer, EventProps, ToolbarProps } from "react-big-calendar";
+import { Calendar, momentLocalizer, EventProps, ToolbarProps, SlotInfo } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Task } from "@/lib/types";
+import type { Task, CalendarEvent } from "@/lib/types";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
+import { CreateEventDialog } from "./create-event-dialog";
 
 const localizer = momentLocalizer(moment);
 
@@ -82,36 +83,77 @@ const CustomToolbar = (toolbar: ToolbarProps) => {
 };
 
 
-const EventComponent = ({ event }: EventProps<Task & { title: string }>) => {
+const EventComponent = ({ event }: EventProps<any>) => {
+  if (event.isTask) {
+    // Task rendering
     return (
-        <div className="flex flex-col text-xs p-1 h-full overflow-hidden">
-            <span className="font-semibold truncate text-foreground">{event.title}</span>
-            <span className="text-muted-foreground truncate">{event.assignee.name}</span>
-            <div className="flex-grow" />
-             <Badge 
-                variant={priorityVariant[event.priority]} 
-                className={cn("capitalize h-fit w-fit",
-                    event.priority === "Urgent" && "bg-red-500/20 text-red-700 border-red-500/20",
-                    event.priority === "High" && "bg-amber-500/20 text-amber-700 border-amber-500/20",
-                    event.priority === "Medium" && "bg-sky-500/20 text-sky-700 border-sky-500/20",
-                    event.priority === "Low" && "bg-green-500/20 text-green-700 border-green-500/20",
-                )}
-            >
-                {event.priority}
-            </Badge>
-        </div>
-    )
-}
+      <div className="flex flex-col text-xs p-1 h-full overflow-hidden">
+        <span className="font-semibold truncate text-foreground">{event.title}</span>
+        <span className="text-muted-foreground truncate">{event.assignee.name}</span>
+        <div className="flex-grow" />
+        <Badge
+          variant={priorityVariant[event.priority]}
+          className={cn("capitalize h-fit w-fit",
+            event.priority === "Urgent" && "bg-red-500/20 text-red-700 border-red-500/20",
+            event.priority === "High" && "bg-amber-500/20 text-amber-700 border-amber-500/20",
+            event.priority === "Medium" && "bg-sky-500/20 text-sky-700 border-sky-500/20",
+            event.priority === "Low" && "bg-green-500/20 text-green-700 border-green-500/20",
+          )}
+        >
+          {event.priority}
+        </Badge>
+      </div>
+    );
+  }
+
+  // Generic event rendering
+  return (
+    <div className="flex flex-col text-xs p-1 h-full overflow-hidden">
+      <span className="font-semibold truncate text-foreground">{event.title}</span>
+    </div>
+  );
+};
 
 export function TaskCalendarView({ tasks, onEventClick }: TaskCalendarViewProps) {
-  const events = tasks.map((task) => ({
-    ...task,
-    start: parseISO(task.dueDate),
-    end: parseISO(task.dueDate),
-    allDay: true,
-  }));
+  const [events, setEvents] = React.useState<any[]>([]);
+  const [isEventDialogOpen, setIsEventDialogOpen] = React.useState(false);
+  const [slotInfo, setSlotInfo] = React.useState<SlotInfo | null>(null);
+  
+  React.useEffect(() => {
+     const taskEvents = tasks.map((task) => ({
+        ...task,
+        start: parseISO(task.dueDate),
+        end: parseISO(task.dueDate),
+        allDay: true,
+        isTask: true,
+      }));
+    setEvents(prev => [...taskEvents, ...prev.filter(e => !e.isTask)]);
+  }, [tasks]);
+
+  const handleSelectSlot = (slotInfo: SlotInfo) => {
+    setIsEventDialogOpen(true);
+    setSlotInfo(slotInfo);
+  }
+
+  const handleCreateEvent = (event: Omit<CalendarEvent, 'id'>) => {
+    const newEvent = {
+        id: `EVT-${Date.now()}`,
+        ...event,
+        isTask: false,
+    };
+    setEvents(prev => [...prev, newEvent]);
+  }
+  
+  const handleEventClick = (event: any) => {
+      if (event.isTask) {
+          onEventClick(event);
+      }
+      // Can add logic here to open a detail view for non-task events as well
+  }
+
 
   return (
+    <>
     <Card className="mt-4">
       <CardContent className="p-2 md:p-4">
         <div className="h-[70vh]">
@@ -120,7 +162,9 @@ export function TaskCalendarView({ tasks, onEventClick }: TaskCalendarViewProps)
             events={events}
             startAccessor="start"
             endAccessor="end"
-            onSelectEvent={onEventClick}
+            onSelectEvent={handleEventClick}
+            onSelectSlot={handleSelectSlot}
+            selectable
             style={{ height: '100%' }}
             views={['month', 'week', 'day']}
             components={{
@@ -128,18 +172,24 @@ export function TaskCalendarView({ tasks, onEventClick }: TaskCalendarViewProps)
               event: EventComponent
             }}
             eventPropGetter={(event) => {
-              const priority = event.priority;
-              let className = 'rounded-md p-0.5 border-l-4 cursor-pointer text-foreground ';
-              if(priority === 'Urgent') {
-                className += 'bg-red-500/10 border-red-500';
-              } else if (priority === 'High') {
-                className += 'bg-amber-500/10 border-amber-500';
-              } else if (priority === 'Medium') {
-                 className += 'bg-sky-500/10 border-sky-500';
-              } else {
-                 className += 'bg-green-500/10 border-green-500';
+              if (event.isTask) {
+                  const priority = event.priority;
+                  let className = 'rounded-md p-0.5 border-l-4 cursor-pointer text-foreground ';
+                  if(priority === 'Urgent') {
+                    className += 'bg-red-500/10 border-red-500';
+                  } else if (priority === 'High') {
+                    className += 'bg-amber-500/10 border-amber-500';
+                  } else if (priority === 'Medium') {
+                    className += 'bg-sky-500/10 border-sky-500';
+                  } else {
+                    className += 'bg-green-500/10 border-green-500';
+                  }
+                  return {className};
               }
-              return {className};
+              // Default styling for non-task events
+              return {
+                className: 'rounded-md p-0.5 border-l-4 cursor-pointer text-foreground bg-indigo-500/10 border-indigo-500'
+              }
             }}
              formats={{
                 dayFormat: (date, culture, localizer) => localizer ? localizer.format(date, 'ddd D', culture) : '',
@@ -152,6 +202,13 @@ export function TaskCalendarView({ tasks, onEventClick }: TaskCalendarViewProps)
         </div>
       </CardContent>
     </Card>
+     <CreateEventDialog 
+        isOpen={isEventDialogOpen} 
+        onOpenChange={setIsEventDialogOpen}
+        onCreate={handleCreateEvent}
+        slotInfo={slotInfo}
+      />
+    </>
   );
 }
 
