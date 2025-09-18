@@ -75,6 +75,7 @@ export default function BusinessPage() {
   const [businesses, setBusinesses] = React.useState<Business[]>(initialBusinesses);
   const [editingBusiness, setEditingBusiness] = React.useState<Business | null>(null);
   const [isBusinessDialogOpen, setIsBusinessDialogOpen] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -82,11 +83,63 @@ export default function BusinessPage() {
   const [rowSelection, setRowSelection] = React.useState({});
   
   const handleImportClick = () => {
-    toast({
-        title: "Feature Coming Soon!",
-        description: "The ability to import from Excel is not yet available.",
-    });
+    fileInputRef.current?.click();
   };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    toast({
+      title: "Importing...",
+      description: "Reading data from the Excel file.",
+    });
+
+    try {
+      const XLSX = await import('xlsx');
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = e.target?.result;
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json<any>(worksheet);
+
+        const newBusinesses: Business[] = json.map((row: any, index: number) => {
+           // Find owner by name, or default to the first member
+          const owner = members.find(m => m.name === row.Owner) || members[0];
+          return ({
+          id: `IMPORT-${Date.now()}-${index}`,
+          name: row['Business Name'] || 'Unnamed Business',
+          owner: owner,
+          phone: row['Phone Number'] || 'N/A',
+          type: row['Business Type'] || 'N/A',
+          status: ['Active', 'Inactive', 'Lead'].includes(row.Status) ? row.Status : 'Lead',
+          notes: row.Notes || '',
+        })});
+
+        setBusinesses(prev => [...prev, ...newBusinesses]);
+        toast({
+          title: "Import Successful",
+          description: `${newBusinesses.length} businesses have been added.`,
+        });
+      };
+      reader.readAsArrayBuffer(file);
+    } catch (error) {
+      console.error("Failed to import and parse Excel file", error);
+      toast({
+        variant: "destructive",
+        title: "Import Failed",
+        description: "Could not read data from the selected file. Please ensure it is a valid Excel file.",
+      });
+    }
+
+    // Reset file input
+    if(event.target) {
+        event.target.value = '';
+    }
+  };
+
 
   const handleDeleteBusiness = (businessId: string) => {
     setBusinesses((prev) => prev.filter((b) => b.id !== businessId));
@@ -293,6 +346,13 @@ export default function BusinessPage() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
+             <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept=".xlsx, .xls"
+            />
             <Button variant="outline" onClick={handleImportClick}>
                 <Upload className="mr-2 h-4 w-4" />
                 Import from Excel
@@ -435,3 +495,5 @@ export default function BusinessPage() {
     </Card>
   );
 }
+
+  
