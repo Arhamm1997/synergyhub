@@ -45,7 +45,7 @@ export function SidebarNav() {
         <Logo />
       </SidebarHeader>
       <Separator />
-      <SidebarContent className="p-2">
+      <SidebarContent className="flex-1 p-2">
         <SidebarMenu>
           {navItems.map((item) => (
             <SidebarMenuItem key={item.label}>
@@ -63,7 +63,7 @@ export function SidebarNav() {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="mt-auto">
         <Separator />
          <SidebarMenu>
             {settingsNav.map((item) => (
