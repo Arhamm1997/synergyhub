@@ -11,6 +11,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -99,6 +107,10 @@ export default function ProjectsPage() {
     setEditingProject(project);
     setIsProjectDialogOpen(true);
   }
+
+  const handleDeleteProject = (projectId: string) => {
+    setProjects(prev => prev.filter(p => p.id !== projectId));
+  }
   
   const onDialogClose = () => {
     setEditingProject(null);
@@ -137,9 +149,25 @@ export default function ProjectsPage() {
                   <CardDescription>Client: {project.client}</CardDescription>
                 </div>
               </div>
-               <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleOpenEditDialog(project)}>View Details</DropdownMenuItem>
+                        <DropdownMenuItem>Archive Project</DropdownMenuItem>
+                        <DropdownMenuItem 
+                            className="text-destructive"
+                            onClick={() => handleDeleteProject(project.id)}
+                        >
+                            Delete Project
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
