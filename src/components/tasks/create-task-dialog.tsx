@@ -141,7 +141,7 @@ export function CreateTaskDialog({ onCreate }: CreateTaskDialogProps) {
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="assigneeName"
@@ -183,7 +183,7 @@ export function CreateTaskDialog({ onCreate }: CreateTaskDialogProps) {
                 )}
               />
             </div>
-             <div className="grid grid-cols-2 gap-4">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                 control={form.control}
                 name="status"
@@ -208,7 +208,7 @@ export function CreateTaskDialog({ onCreate }: CreateTaskDialogProps) {
                 control={form.control}
                 name="dueDate"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col pt-2">
+                  <FormItem className="flex flex-col pt-2 space-y-2">
                     <FormLabel>Due Date</FormLabel>
                     <DatePicker date={field.value} setDate={field.onChange} />
                     <FormMessage />

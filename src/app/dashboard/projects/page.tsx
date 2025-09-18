@@ -72,7 +72,7 @@ const statusVariant: { [key: string]: "default" | "secondary" | "destructive" } 
 
 export default function ProjectsPage() {
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-4">
        <div className="flex items-center justify-between">
          <div>
             <h1 className="text-2xl font-bold">Projects</h1>
@@ -84,7 +84,7 @@ export default function ProjectsPage() {
         </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {projects.map((project) => (
           <Card key={project.name}>
             <CardHeader className="flex flex-row items-start justify-between">

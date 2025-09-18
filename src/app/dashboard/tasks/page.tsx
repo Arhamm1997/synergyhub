@@ -18,7 +18,6 @@ import {
   ArrowUpDown,
   ChevronDown,
   MoreHorizontal,
-  PlusCircle,
   List,
   LayoutGrid,
   Calendar as CalendarIcon,
@@ -64,6 +63,7 @@ import { CreateTaskDialog } from "@/components/tasks/create-task-dialog";
 import { TaskCalendarView } from "@/components/tasks/task-calendar-view";
 import type { Task, TaskStatus } from "@/lib/types";
 import placeholderImages from "@/lib/placeholder-images.json";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const initialTasks: Task[] = [
     {
@@ -176,9 +176,15 @@ export const columns: ColumnDef<Task>[] = [
   {
     accessorKey: "title",
     header: "Task",
-    cell: ({ row }) => (
-      <div className="font-medium">{row.getValue("title")}</div>
-    ),
+    cell: ({ row }) => {
+       const assignee = row.original.assignee;
+       return (
+        <div>
+            <div className="font-medium">{row.getValue("title")}</div>
+            <div className="text-sm text-muted-foreground md:hidden">{assignee.name}</div>
+        </div>
+       )
+    },
   },
   {
     accessorKey: "assignee",
@@ -302,6 +308,15 @@ export default function TasksPage() {
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({ id: false });
   const [rowSelection, setRowSelection] = React.useState({});
   const [activeTab, setActiveTab] = React.useState("grid");
+  const isMobile = useIsMobile();
+
+  React.useEffect(() => {
+    if (isMobile) {
+        setColumnVisibility({ id: false, assignee: false });
+    } else {
+        setColumnVisibility({ id: false });
+    }
+  }, [isMobile]);
 
   const onDragEnd = (result: DropResult) => {
     const { source, destination, draggableId } = result;
@@ -409,23 +424,25 @@ export default function TasksPage() {
       </CardHeader>
       <CardContent className="flex-grow flex flex-col">
         <Tabs defaultValue="grid" className="h-full flex flex-col" onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="grid" className="gap-2"><List /> List</TabsTrigger>
-            <TabsTrigger value="board" className="gap-2"><LayoutGrid /> Board</TabsTrigger>
-            <TabsTrigger value="calendar" className="gap-2"><CalendarIcon /> Calendar</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="grid" className="flex-grow">
-            <div className="py-4">
+          <div className="flex items-center justify-between">
+            <TabsList className="mb-4">
+              <TabsTrigger value="grid" className="gap-2"><List /> <span className="hidden sm:inline">List</span></TabsTrigger>
+              <TabsTrigger value="board" className="gap-2"><LayoutGrid /> <span className="hidden sm:inline">Board</span></TabsTrigger>
+              <TabsTrigger value="calendar" className="gap-2"><CalendarIcon /> <span className="hidden sm:inline">Calendar</span></TabsTrigger>
+            </TabsList>
+             {activeTab === 'grid' && (
               <Input
                 placeholder="Filter tasks by title..."
                 value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
                 onChange={(event) =>
                   table.getColumn("title")?.setFilterValue(event.target.value)
                 }
-                className="max-w-sm"
+                className="max-w-xs"
               />
-            </div>
+            )}
+          </div>
+          
+          <TabsContent value="grid" className="flex-grow">
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -501,16 +518,16 @@ export default function TasksPage() {
               </div>
             </div>
           </TabsContent>
-          <TabsContent value="board" className="flex-grow">
+          <TabsContent value="board" className="flex-grow overflow-hidden">
              <DragDropContext onDragEnd={onDragEnd}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 py-4 h-full">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 py-4 h-full overflow-x-auto">
                 {kanbanColumns.map((column) => (
                   <Droppable key={column.title} droppableId={column.title}>
                     {(provided, snapshot) => (
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`rounded-lg p-2 flex flex-col ${snapshot.isDraggingOver ? "bg-muted" : "bg-muted/50"}`}
+                        className={`rounded-lg p-2 flex flex-col min-w-[300px] ${snapshot.isDraggingOver ? "bg-muted" : "bg-muted/50"}`}
                       >
                         <h3 className="font-semibold p-2">{column.title} ({column.tasks.length})</h3>
                         <div className="overflow-y-auto flex-grow min-h-[200px]">

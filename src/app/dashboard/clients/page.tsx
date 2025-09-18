@@ -1,3 +1,4 @@
+
 "use client"
 
 import Image from "next/image";
@@ -74,7 +75,7 @@ const statusVariant: { [key: string]: "default" | "secondary" | "destructive" } 
 
 export default function ClientsPage() {
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-4">
        <div className="flex items-center justify-between">
          <div>
             <h1 className="text-2xl font-bold">Clients</h1>
@@ -86,7 +87,7 @@ export default function ClientsPage() {
         </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {clients.map((client) => (
           <Card key={client.name}>
             <CardHeader className="flex flex-row items-start justify-between">

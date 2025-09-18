@@ -24,6 +24,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import placeholderImages from "@/lib/placeholder-images.json";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+
 
 const contacts = [
   {
@@ -90,12 +93,18 @@ const messages = [
 ];
 
 export default function MessagesPage() {
-  const activeContact = contacts[0]; // Example: Sarah Lee is the active chat
+  const [activeContact, setActiveContact] = useState(contacts[0]);
+  const [showChat, setShowChat] = useState(false);
+
+  const handleContactClick = (contact: typeof contacts[0]) => {
+    setActiveContact(contact);
+    setShowChat(true);
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] lg:grid-cols-[350px_1fr] h-[calc(100vh-100px)] gap-4">
       {/* Contacts List */}
-      <Card className="flex flex-col">
+      <Card className={cn("flex-col", showChat ? "hidden md:flex" : "flex")}>
         <CardHeader className="p-4">
           <CardTitle>Chats</CardTitle>
           <div className="relative mt-2">
@@ -108,6 +117,7 @@ export default function MessagesPage() {
             {contacts.map((contact, index) => (
               <div
                 key={index}
+                onClick={() => handleContactClick(contact)}
                 className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
                   contact.name === activeContact.name
                     ? "bg-muted"
@@ -145,9 +155,12 @@ export default function MessagesPage() {
       </Card>
 
       {/* Chat Window */}
-      <Card className="flex flex-col h-full">
+      <Card className={cn("flex-col h-full", showChat ? "flex" : "hidden md:flex")}>
         <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
           <div className="flex items-center gap-3">
+             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setShowChat(false)}>
+                <MessageCircle className="h-5 w-5" />
+            </Button>
             <Avatar>
               <AvatarImage
                 src={activeContact.avatarUrl}
@@ -171,7 +184,7 @@ export default function MessagesPage() {
             <Button variant="ghost" size="icon">
               <Video className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="hidden md:flex">
               <MessageCircle className="h-5 w-5" />
             </Button>
           </div>
@@ -192,7 +205,7 @@ export default function MessagesPage() {
                   </Avatar>
                 )}
                 <div
-                  className={`max-w-xs lg:max-w-md p-3 rounded-xl ${
+                  className={`max-w-[70%] lg:max-w-md p-3 rounded-xl ${
                     message.isMe
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted"
