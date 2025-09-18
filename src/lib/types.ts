@@ -1,23 +1,51 @@
+
 import type { LucideIcon } from "lucide-react";
 import type { Table } from "@tanstack/react-table";
 import type { Event } from 'react-big-calendar';
 
 export type Priority = "High" | "Medium" | "Low";
 export type TaskStatus = "Todo" | "In Progress" | "Done" | "Cancelled";
+export type ProjectStatus = "Not Started" | "In Progress" | "On Hold" | "Completed" | "Cancelled";
+export type ClientStatus = "Lead" | "Active" | "On Hold" | "Completed";
+
+export interface Assignee {
+  name: string;
+  avatarUrl: string;
+  avatarHint: string;
+}
 
 export interface Task {
   id: string;
   title: string;
   description?: string;
-  assignee: {
-    name: string;
-    avatarUrl: string;
-    avatarHint: string;
-  };
+  assignee: Assignee;
   priority: Priority;
   status: TaskStatus;
   dueDate: string;
 }
+
+export interface Project {
+  id: string;
+  name: string;
+  client: string;
+  status: ProjectStatus;
+  progress: number;
+  deadline: string;
+  team: Assignee[];
+}
+
+export interface Client {
+  id: string;
+  name: string;
+  logoUrl: string;
+  logoHint: string;
+  project: string;
+  status: ClientStatus | ProjectStatus;
+  progress?: number;
+  team: { name: string; avatarUrl: string }[];
+  services?: string[];
+}
+
 
 export interface TaskEvent extends Event {
     resource: Task;

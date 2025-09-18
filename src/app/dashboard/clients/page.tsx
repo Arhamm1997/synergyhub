@@ -1,6 +1,7 @@
 
 "use client"
 
+import { useState } from "react";
 import Image from "next/image";
 import { PlusCircle, MoreVertical } from "lucide-react";
 import {
@@ -16,9 +17,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import placeholderImages from "@/lib/placeholder-images.json";
+import { ClientDialog } from "@/components/clients/client-dialog";
+import type { Client } from "@/lib/types";
 
-const clients = [
+const initialClients: Client[] = [
   {
+    id: "1",
     name: "Innovate Corp",
     logoUrl: "https://picsum.photos/seed/logo1/40/40",
     logoHint: "abstract logo",
@@ -31,6 +35,7 @@ const clients = [
     ],
   },
   {
+    id: "2",
     name: "QuantumLeap",
     logoUrl: "https://picsum.photos/seed/logo2/40/40",
     logoHint: "geometric logo",
@@ -42,6 +47,7 @@ const clients = [
     ],
   },
   {
+    id: "3",
     name: "Stellar Solutions",
     logoUrl: "https://picsum.photos/seed/logo3/40/40",
     logoHint: "star logo",
@@ -54,6 +60,7 @@ const clients = [
     ],
   },
     {
+    id: "4",
     name: "Apex Enterprises",
     logoUrl: "https://picsum.photos/seed/logo4/40/40",
     logoHint: "mountain logo",
@@ -71,9 +78,24 @@ const statusVariant: { [key: string]: "default" | "secondary" | "destructive" } 
   "In Progress": "default",
   "Completed": "secondary",
   "On Hold": "destructive",
+  "Lead": "outline",
+  "Active": "default",
 };
 
 export default function ClientsPage() {
+  const [clients, setClients] = useState<Client[]>(initialClients);
+
+  const handleCreateClient = (newClient: Omit<Client, 'id' | 'project' | 'progress' | 'team'>) => {
+    const clientToAdd: Client = {
+      id: `CLIENT-${Math.floor(Math.random() * 10000)}`,
+      project: "New Project",
+      progress: 0,
+      team: [],
+      ...newClient
+    }
+    setClients(prev => [clientToAdd, ...prev]);
+  };
+
   return (
     <div className="flex flex-col gap-4">
        <div className="flex items-center justify-between">
@@ -81,10 +103,12 @@ export default function ClientsPage() {
             <h1 className="text-2xl font-bold">Clients</h1>
             <p className="text-muted-foreground">Manage all your client relationships and projects.</p>
          </div>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add New Client
-        </Button>
+        <ClientDialog onCreateClient={handleCreateClient}>
+          <Button>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add New Client
+          </Button>
+        </ClientDialog>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -121,16 +145,18 @@ export default function ClientsPage() {
                     ))}
                  </div>
               </div>
-              <div>
-                <div className="flex justify-between text-sm text-muted-foreground mb-1">
-                    <span>Progress</span>
-                    <span>{client.progress}%</span>
+              {client.progress !== undefined && (
+                <div>
+                  <div className="flex justify-between text-sm text-muted-foreground mb-1">
+                      <span>Progress</span>
+                      <span>{client.progress}%</span>
+                  </div>
+                  <Progress value={client.progress} />
                 </div>
-                <Progress value={client.progress} />
-              </div>
+              )}
             </CardContent>
             <CardFooter>
-              <Button variant="outline" className="w-full">View Project</Button>
+              <Button variant="outline" className="w-full">View Details</Button>
             </CardFooter>
           </Card>
         ))}
