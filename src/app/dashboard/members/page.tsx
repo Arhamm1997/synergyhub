@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import placeholderImages from "@/lib/placeholder-images.json";
-import type { Member } from "@/lib/types";
+import type { Member, Department } from "@/lib/types";
 import { MemberDialog } from "@/components/members/member-dialog";
 
 const initialMembers: Member[] = [
@@ -59,7 +59,7 @@ const initialMembers: Member[] = [
   },
 ];
 
-const departmentVariant: { [key in Member['department']]: "default" | "secondary" | "destructive" | "outline" } = {
+const departmentVariant: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
     "Engineering": "default",
     "Design": "secondary",
     "Marketing": "outline",

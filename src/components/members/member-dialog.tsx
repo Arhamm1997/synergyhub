@@ -33,15 +33,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { Member, Department } from "@/lib/types";
-
-const departments: Department[] = ["Engineering", "Design", "Marketing", "Sales", "Support", "HR", "Operations"];
+import type { Member } from "@/lib/types";
 
 const formSchema = z.object({
   name: z.string().min(1, "Member name is required"),
   email: z.string().email("Please enter a valid email address"),
   role: z.string().min(1, "Role is required"),
-  department: z.enum(departments),
+  department: z.string().min(1, "Department is required"),
   avatarUrl: z.string().url("Please enter a valid image URL.").optional().or(z.literal('')),
   details: z.string().optional(),
 });
@@ -62,7 +60,7 @@ export function MemberDialog({ children, member, onCreateMember }: MemberDialogP
       name: member?.name || "",
       email: member?.email || "",
       role: member?.role || "",
-      department: member?.department || "Engineering",
+      department: member?.department || "",
       avatarUrl: member?.avatarUrl || "",
       details: member?.details || "",
     },
@@ -141,16 +139,9 @@ export function MemberDialog({ children, member, onCreateMember }: MemberDialogP
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Department</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a department" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {departments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                        <Input placeholder="e.g. Engineering" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
