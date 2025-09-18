@@ -15,6 +15,7 @@ const localizer = momentLocalizer(moment);
 
 interface TaskCalendarViewProps {
   tasks: Task[];
+  onEventClick: (task: Task) => void;
 }
 
 const priorityVariant: { [key in Task["priority"]]: "destructive" | "secondary" | "default" } = {
@@ -37,7 +38,7 @@ const EventComponent = ({ event }: EventProps<Task & { title: string }>) => {
     )
 }
 
-export function TaskCalendarView({ tasks }: TaskCalendarViewProps) {
+export function TaskCalendarView({ tasks, onEventClick }: TaskCalendarViewProps) {
   const events = tasks.map((task) => ({
     ...task,
     start: parseISO(task.dueDate),
@@ -54,6 +55,7 @@ export function TaskCalendarView({ tasks }: TaskCalendarViewProps) {
             events={events}
             startAccessor="start"
             endAccessor="end"
+            onSelectEvent={onEventClick}
             style={{ height: '100%' }}
             views={['month', 'week', 'day']}
             components={{
@@ -61,7 +63,7 @@ export function TaskCalendarView({ tasks }: TaskCalendarViewProps) {
             }}
             eventPropGetter={(event) => {
               const priority = event.priority;
-              let className = 'rounded-lg p-2 border-l-4 ';
+              let className = 'rounded-lg p-2 border-l-4 cursor-pointer ';
               if(priority === 'High') {
                 className += 'bg-destructive/10 border-destructive text-destructive-foreground';
               } else if (priority === 'Medium') {

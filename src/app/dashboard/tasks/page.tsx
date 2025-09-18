@@ -2,7 +2,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -65,6 +64,7 @@ import { TaskCalendarView } from "@/components/tasks/task-calendar-view";
 import type { Task, TaskStatus } from "@/lib/types";
 import placeholderImages from "@/lib/placeholder-images.json";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useChatStore } from "@/store/chat-store";
 
 const initialTasks: Task[] = [
     {
@@ -271,7 +271,7 @@ export const columns: ColumnDef<Task>[] = [
   },
 ];
 
-const KanbanCard = ({ task, index }: { task: Task; index: number }) => {
+const KanbanCard = ({ task, index, onCardClick }: { task: Task; index: number; onCardClick: (task: Task) => void }) => {
   return (
     <Draggable draggableId={task.id} index={index}>
       {(provided, snapshot) => (
@@ -279,7 +279,8 @@ const KanbanCard = ({ task, index }: { task: Task; index: number }) => {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className={`p-4 mb-2 rounded-lg shadow-sm bg-card ${snapshot.isDragging ? "ring-2 ring-primary" : ""}`}
+          onClick={() => onCardClick(task)}
+          className={`p-4 mb-2 rounded-lg shadow-sm bg-card cursor-pointer ${snapshot.isDragging ? "ring-2 ring-primary" : ""}`}
         >
           <div className="flex justify-between items-start">
             <h4 className="font-medium text-sm">{task.title}</h4>
@@ -303,7 +304,7 @@ const KanbanCard = ({ task, index }: { task: Task; index: number }) => {
 
 
 export default function TasksPage() {
-  const router = useRouter();
+  const { openChat, setContact } = useChatStore();
   const [tasks, setTasks] = React.useState<Task[]>(initialTasks);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -314,7 +315,7 @@ export default function TasksPage() {
 
   React.useEffect(() => {
     if (isMobile) {
-        setColumnVisibility({ id: false, assignee: false });
+        setColumnVisibility({ id: false, assignee: false, priority: false, dueDate: false });
     } else {
         setColumnVisibility({ id: false });
     }
@@ -380,8 +381,15 @@ export default function TasksPage() {
     { title: "Cancelled", tasks: tasks.filter((t) => t.status === "Cancelled") },
   ];
 
-  const handleRowClick = (task: Task) => {
-    router.push(`/dashboard/messages?contact=${task.assignee.name}`);
+  const handleTaskClick = (task: Task) => {
+    const contact = {
+      name: task.assignee.name,
+      avatarUrl: task.assignee.avatarUrl,
+      avatarHint: task.assignee.avatarHint,
+      status: 'Online' // This can be made dynamic later
+    };
+    setContact(contact);
+    openChat();
   };
 
 
@@ -476,7 +484,7 @@ export default function TasksPage() {
                       <TableRow
                         key={row.id}
                         data-state={row.getIsSelected() && "selected"}
-                        onClick={() => handleRowClick(row.original)}
+                        onClick={() => handleTaskClick(row.original)}
                         className="cursor-pointer"
                       >
                         {row.getVisibleCells().map((cell) => (
@@ -541,7 +549,7 @@ export default function TasksPage() {
                         <h3 className="font-semibold p-2">{column.title} ({column.tasks.length})</h3>
                         <div className="overflow-y-auto flex-grow min-h-[200px]">
                             {column.tasks.map((task, index) => (
-                                <KanbanCard key={task.id} task={task} index={index} />
+                                <KanbanCard key={task.id} task={task} index={index} onCardClick={handleTaskClick} />
                             ))}
                             {provided.placeholder}
                         </div>
@@ -553,7 +561,7 @@ export default function TasksPage() {
             </DragDropContext>
           </TabsContent>
            <TabsContent value="calendar" className="flex-grow">
-            <TaskCalendarView tasks={tasks} />
+            <TaskCalendarView tasks={tasks} onEventClick={handleTaskClick} />
           </TabsContent>
         </Tabs>
       </CardContent>

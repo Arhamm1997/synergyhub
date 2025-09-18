@@ -6,13 +6,9 @@ import {
   Video,
   Phone,
   Search,
-  Paperclip,
-  Mic,
-  Send,
   Users as UsersIcon,
   ArrowLeft
 } from "lucide-react";
-import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,9 +24,12 @@ import placeholderImages from "@/lib/placeholder-images.json";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
+import type { Contact } from "@/lib/types";
+import { ChatPanelContent } from "@/components/messages/chat-panel";
+import { useChatStore } from "@/store/chat-store";
 
 
-const contacts = [
+const contacts: Contact[] = [
    {
     name: "Alex Moran",
     avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl!,
@@ -76,57 +75,32 @@ const contacts = [
   },
 ];
 
-const messages = [
-  {
-    sender: "Sarah Lee",
-    text: "Hey Alex, I've pushed the latest designs for the marketing website. Can you take a look?",
-    time: "10:30 AM",
-    isMe: false,
-    avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!,
-    avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageHint!
-  },
-  {
-    sender: "Alex Moran",
-    text: "Sure, Sarah. On it now. I'll give you feedback in a bit.",
-    time: "10:31 AM",
-    isMe: true,
-    avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl!,
-    avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageHint!
-  },
-  {
-    sender: "Sarah Lee",
-    text: "Sounds good, I'll review the new designs.",
-    time: "10:42 AM",
-    isMe: false,
-    avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!,
-    avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageHint!
-  },
-];
 
 export default function MessagesPage() {
   const searchParams = useSearchParams();
   const contactName = searchParams.get("contact");
+  const { openChat } = useChatStore();
+
   const [activeContact, setActiveContact] = useState(() => {
     const initialContact = contacts.find(c => c.name === contactName);
-    return initialContact || contacts[0];
+    return initialContact || null;
   });
-  const [showChat, setShowChat] = useState(false);
+  const [showChat, setShowChat] = useState(!!activeContact);
 
   useEffect(() => {
     const contactFromUrl = contacts.find(c => c.name === contactName);
     if (contactFromUrl) {
       setActiveContact(contactFromUrl);
-      setShowChat(true); // Always show chat if contact is in URL
-    } else {
-       // Only hide chat if there's no contact in the URL on initial load
-      setShowChat(false);
+      setShowChat(true); 
     }
   }, [contactName]);
 
 
-  const handleContactClick = (contact: typeof contacts[0]) => {
+  const handleContactClick = (contact: Contact) => {
     setActiveContact(contact);
     setShowChat(true);
+    // On larger screens, this will just highlight. On mobile, it shows the chat.
+    // For consistency, we can also use the global chat store here if needed.
   }
 
   return (
@@ -183,107 +157,27 @@ export default function MessagesPage() {
       </Card>
 
       {/* Chat Window */}
-      { activeContact && (
-      <Card className={cn("flex-col h-full", showChat ? "flex" : "hidden md:flex")}>
-        <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
-          <div className="flex items-center gap-3">
-             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setShowChat(false)}>
-                <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <Avatar>
-              <AvatarImage
-                src={activeContact.avatarUrl}
-                alt={activeContact.name}
-                data-ai-hint={activeContact.avatarHint}
-              />
-              <AvatarFallback>{activeContact.name.substring(0, 2)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="font-semibold">{activeContact.name}</p>
-              { activeContact.status && (
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  <span className={`h-2 w-2 rounded-full ${activeContact.status === 'Online' ? 'bg-green-500' : activeContact.status === 'Away' ? 'bg-yellow-500' : 'bg-gray-400'}`}></span>
-                  {activeContact.status}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon">
-              <Phone className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Video className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="hidden md:flex">
-              <MessageCircle className="h-5 w-5" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="flex-1 p-4 overflow-y-auto">
-          <div className="space-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex items-end gap-2 ${
-                  message.isMe ? "justify-end" : ""
-                }`}
-              >
-                {!message.isMe && (
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={message.avatarUrl} alt={message.sender} data-ai-hint={message.avatarHint} />
-                    <AvatarFallback>{message.sender.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                )}
-                <div
-                  className={`max-w-[70%] lg:max-w-md p-3 rounded-xl ${
-                    message.isMe
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
-                  }`}
-                >
-                  <p className="text-sm">{message.text}</p>
-                  <p
-                    className={`text-xs mt-1 text-right ${
-                      message.isMe
-                        ? "text-primary-foreground/70"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    {message.time}
-                  </p>
-                </div>
-                 {message.isMe && (
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={message.avatarUrl} alt={message.sender} data-ai-hint={message.avatarHint} />
-                    <AvatarFallback>{message.sender.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                )}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-        <div className="p-4 border-t">
-          <div className="relative">
-            <Input
-              placeholder="Type a message..."
-              className="pr-28"
+      <div className={cn("h-full", showChat ? "flex" : "hidden md:flex")}>
+        {activeContact ? (
+          <Card className="flex-col h-full w-full">
+            <ChatPanelContent 
+              contact={activeContact} 
+              onClose={() => setShowChat(false)}
+              isSheet={false} 
             />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
-               <Button variant="ghost" size="icon">
-                <Paperclip className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon">
-                <Mic className="h-5 w-5" />
-              </Button>
-              <Button size="sm" className="ml-2">
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </Card>
-      )}
+          </Card>
+        ) : (
+          <Card className="hidden md:flex flex-col items-center justify-center h-full w-full text-center">
+            <MessageCircle className="h-16 w-16 text-muted-foreground" />
+            <CardHeader>
+              <CardTitle>Select a chat</CardTitle>
+              <CardDescription>
+                Choose a conversation from the left to start messaging.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,10 +1,11 @@
+
 import {
   SidebarProvider,
   Sidebar,
-  SidebarInset,
 } from "@/components/ui/sidebar";
 import { Header } from "@/components/header";
 import { SidebarNav } from "@/components/sidebar-nav";
+import { ChatPanel } from "@/components/messages/chat-panel";
 
 export default function DashboardLayout({
   children,
@@ -24,8 +25,7 @@ export default function DashboardLayout({
           </main>
         </div>
       </div>
+      <ChatPanel />
     </SidebarProvider>
   );
 }
-
-    

@@ -7,12 +7,25 @@ export type Priority = "High" | "Medium" | "Low";
 export type TaskStatus = "Todo" | "In Progress" | "Done" | "Cancelled";
 export type ProjectStatus = "Not Started" | "In Progress" | "On Hold" | "Completed" | "Cancelled";
 export type ClientStatus = "Lead" | "Active" | "On Hold" | "Completed";
+export type UserStatus = "Online" | "Away" | "Offline";
 
 export interface Assignee {
   name: string;
   avatarUrl: string;
   avatarHint: string;
 }
+
+export interface Contact {
+  name: string;
+  avatarUrl?: string;
+  avatarHint?: string;
+  isGroup?: boolean;
+  lastMessage?: string;
+  time?: string;
+  unread?: number;
+  status?: UserStatus;
+}
+
 
 export interface Task {
   id: string;
