@@ -31,6 +31,15 @@ import { useSearchParams } from "next/navigation";
 
 
 const contacts = [
+   {
+    name: "Alex Moran",
+    avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl!,
+    avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageHint!,
+    lastMessage: "Sure, Sarah. On it now.",
+    time: "10:31 AM",
+    unread: 0,
+    status: "Online",
+  },
   {
     name: "Sarah Lee",
     avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!,
@@ -101,13 +110,16 @@ export default function MessagesPage() {
     const initialContact = contacts.find(c => c.name === contactName);
     return initialContact || contacts[0];
   });
-  const [showChat, setShowChat] = useState(!!contactName);
+  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
     const contactFromUrl = contacts.find(c => c.name === contactName);
     if (contactFromUrl) {
       setActiveContact(contactFromUrl);
-      setShowChat(true);
+      setShowChat(true); // Always show chat if contact is in URL
+    } else {
+       // Only hide chat if there's no contact in the URL on initial load
+      setShowChat(false);
     }
   }, [contactName]);
 
@@ -188,10 +200,12 @@ export default function MessagesPage() {
             </Avatar>
             <div>
               <p className="font-semibold">{activeContact.name}</p>
-              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                 <span className={`h-2 w-2 rounded-full ${activeContact.status === 'Online' ? 'bg-green-500' : activeContact.status === 'Away' ? 'bg-yellow-500' : 'bg-gray-400'}`}></span>
-                {activeContact.status}
-              </p>
+              { activeContact.status && (
+                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  <span className={`h-2 w-2 rounded-full ${activeContact.status === 'Online' ? 'bg-green-500' : activeContact.status === 'Away' ? 'bg-yellow-500' : 'bg-gray-400'}`}></span>
+                  {activeContact.status}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">
