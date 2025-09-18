@@ -78,7 +78,7 @@ type ClientFormValues = z.infer<typeof formSchema>;
 interface ClientDialogProps {
   children?: ReactNode;
   client?: Client;
-  onSave: (client: Omit<Client, 'id' | 'project' | 'progress' | 'team'> | Client) => void;
+  onSave: (client: Omit<Client, 'id' | 'project' | 'progress' | 'assignees'> | Client) => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }

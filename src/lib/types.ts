@@ -59,7 +59,7 @@ export interface Client {
   project: string;
   status: ClientStatus;
   progress?: number;
-  team: { name: string; avatarUrl: string }[];
+  assignees: Assignee[];
   services?: string[];
 }
 

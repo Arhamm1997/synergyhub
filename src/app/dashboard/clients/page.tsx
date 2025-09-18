@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { PlusCircle, MoreVertical, Trash2 } from "lucide-react";
 import {
   Card,
@@ -49,9 +50,9 @@ const initialClients: Client[] = [
     project: "Mobile App Redesign",
     status: "Active",
     progress: 75,
-    team: [
-      { name: "SL", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl! },
-      { name: "DC", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageUrl! },
+    assignees: [
+      { name: "Sarah Lee", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!, avatarHint: 'woman portrait' },
+      { name: "David Chen", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageUrl!, avatarHint: 'man portrait professional' },
     ],
   },
   {
@@ -62,8 +63,8 @@ const initialClients: Client[] = [
     project: "AI Integration",
     status: "Completed",
     progress: 100,
-    team: [
-      { name: "MR", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageUrl! },
+    assignees: [
+      { name: "Maria Rodriguez", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageUrl!, avatarHint: 'woman professional' },
     ],
   },
   {
@@ -74,9 +75,9 @@ const initialClients: Client[] = [
     project: "E-commerce Platform",
     status: "On Hold",
     progress: 30,
-    team: [
-      { name: "AM", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl! },
-      { name: "SL", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl! },
+    assignees: [
+      { name: "Alex Moran", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl!, avatarHint: 'man portrait' },
+      { name: "Sarah Lee", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!, avatarHint: 'woman portrait' },
     ],
   },
     {
@@ -87,9 +88,9 @@ const initialClients: Client[] = [
     project: "Data Analytics Dashboard",
     status: "Active",
     progress: 50,
-    team: [
-        { name: "DC", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageUrl! },
-        { name: "MR", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageUrl! },
+    assignees: [
+        { name: "David Chen", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageUrl!, avatarHint: 'man portrait professional' },
+        { name: "Maria Rodriguez", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageUrl!, avatarHint: 'woman professional' },
     ],
   },
 ];
@@ -108,10 +109,10 @@ export default function ClientsPage() {
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const handleSaveClient = (clientData: Omit<Client, 'id' | 'project' | 'progress' | 'team'> | Client) => {
+  const handleSaveClient = (clientData: Omit<Client, 'id' | 'project' | 'progress' | 'assignees'> | Client) => {
     if ('id' in clientData) {
       // Editing existing client
-      setClients(prev => prev.map(c => c.id === clientData.id ? { ...c, ...clientData } : c));
+      setClients(prev => prev.map(c => c.id === clientData.id ? { ...c, ...clientData } as Client : c));
       toast({ title: "Client Updated", description: "The client details have been saved."});
     } else {
       // Creating new client
@@ -119,7 +120,7 @@ export default function ClientsPage() {
         id: `CLIENT-${Math.floor(Math.random() * 10000)}`,
         project: "New Project",
         progress: 0,
-        team: [],
+        assignees: [],
         ...clientData
       }
       setClients(prev => [clientToAdd, ...prev]);
@@ -219,10 +220,10 @@ export default function ClientsPage() {
               <div className="flex items-center justify-between">
                  <Badge variant={statusVariant[client.status] || 'outline'}>{client.status}</Badge>
                  <div className="flex -space-x-2">
-                    {client.team.map((member, index) => (
+                    {client.assignees.map((member, index) => (
                         <Avatar key={index} className="h-6 w-6 border-2 border-card">
                             <AvatarImage src={member.avatarUrl} alt={member.name} />
-                            <AvatarFallback>{member.name}</AvatarFallback>
+                            <AvatarFallback>{member.name.substring(0,2)}</AvatarFallback>
                         </Avatar>
                     ))}
                  </div>
@@ -238,7 +239,9 @@ export default function ClientsPage() {
               )}
             </CardContent>
             <CardFooter>
-              <Button variant="outline" className="w-full">View Details</Button>
+              <Button asChild variant="outline" className="w-full">
+                <Link href={`/dashboard/clients/${client.id}`}>View Details</Link>
+              </Button>
             </CardFooter>
           </Card>
         ))}
