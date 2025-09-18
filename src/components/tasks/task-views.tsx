@@ -22,6 +22,7 @@ import {
   LayoutGrid,
   Calendar as CalendarIcon,
   PlusCircle,
+  Trash2,
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
@@ -67,6 +68,9 @@ import type { Task, TaskStatus } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useChatStore } from "@/store/chat-store";
 import { initialTasks } from "./task-data";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+
 
 export const priorityVariant: { [key in Task["priority"]]: "destructive" | "secondary" | "default" | "outline" } = {
   Urgent: "destructive",
@@ -197,6 +201,8 @@ export const columns: ColumnDef<Task>[] = [
     enableHiding: false,
     cell: ({ row, table }) => {
       const meta = table.options.meta as any;
+      const task = row.original;
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -207,9 +213,31 @@ export const columns: ColumnDef<Task>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => meta.handleTaskClick(row.original)}>View/Edit Details</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => meta.handleTaskClick(task)}>View/Edit Details</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">Delete Task</DropdownMenuItem>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <DropdownMenuItem
+                        onSelect={(e) => e.preventDefault()}
+                        className="text-destructive"
+                    >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Task
+                    </DropdownMenuItem>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the task "{task.title}".
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => meta.handleDeleteTask(task.id)}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -258,13 +286,18 @@ export function ProjectTaskView({ initialTasks: projectTasks, title }: { initial
   const [activeTab, setActiveTab] = React.useState("grid");
   const isMobile = useIsMobile();
   const { openChat, setContact } = useChatStore();
+  const { toast } = useToast();
 
   const [selectedTask, setSelectedTask] = React.useState<Task | null>(null);
   const [isDetailViewOpen, setIsDetailViewOpen] = React.useState(false);
+  
+  React.useEffect(() => {
+    setTasks(projectTasks)
+  }, [projectTasks]);
 
   React.useEffect(() => {
     if (isMobile) {
-        setColumnVisibility({ id: false, assignee: false, priority: false, dueDate: false, actions: false });
+        setColumnVisibility({ id: false, assignee: false, priority: false, dueDate: false, actions: true });
     } else {
         setColumnVisibility({ id: false });
     }
@@ -281,23 +314,19 @@ export function ProjectTaskView({ initialTasks: projectTasks, title }: { initial
         
         if (!taskToMove) return prevTasks;
         
-        if (source.droppableId === destination.droppableId) {
-             const items = newTasks.filter(t => t.status === source.droppableId);
-             const [reorderedItem] = items.splice(source.index, 1);
-             items.splice(destination.index, 0, reorderedItem);
-             
-             const otherItems = newTasks.filter(t => t.status !== source.droppableId);
-             return [...otherItems, ...items].sort((a,b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
-        }
+        // Update status based on destination column
+        const newStatus = destination.droppableId as TaskStatus;
+        const updatedTask = { ...taskToMove, status: newStatus };
 
-        taskToMove.status = destination.droppableId as TaskStatus;
-        const sourceItems = newTasks.filter(t => t.status === source.droppableId && t.id !== draggableId);
-        const destItems = newTasks.filter(t => t.status === destination.droppableId);
-        destItems.splice(destination.index, 0, taskToMove);
-
-        const otherItems = newTasks.filter(t => t.status !== source.droppableId && t.status !== destination.droppableId);
+        // Remove from old position
+        newTasks.splice(newTasks.findIndex(t => t.id === draggableId), 1);
         
-        return [...otherItems, ...sourceItems, ...destItems].sort((a,b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
+        // Add to new position
+        newTasks.splice(destination.index, 0, updatedTask);
+
+        handleUpdateTask(updatedTask);
+
+        return newTasks;
     });
 };
 
@@ -313,6 +342,17 @@ export function ProjectTaskView({ initialTasks: projectTasks, title }: { initial
 
   const handleUpdateTask = (updatedTask: Task) => {
     setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
+  };
+  
+  const handleDeleteTask = (taskId: string) => {
+    const taskToDelete = tasks.find(t => t.id === taskId);
+    if (taskToDelete) {
+        setTasks(prev => prev.filter(t => t.id !== taskId));
+        toast({
+            title: "Task Deleted",
+            description: `The task "${taskToDelete.title}" has been successfully deleted.`,
+        });
+    }
   };
 
 
@@ -336,6 +376,7 @@ export function ProjectTaskView({ initialTasks: projectTasks, title }: { initial
      meta: {
       handleTaskClick,
       handleAssigneeClick,
+      handleDeleteTask
     },
   });
 
@@ -432,13 +473,6 @@ export function ProjectTaskView({ initialTasks: projectTasks, title }: { initial
                           </TableHead>
                         );
                       })}
-                       <TableHead className="w-[40px]">
-                           <CreateTaskDialog onCreate={ (newTask) => setTasks(prev => [newTask, ...prev]) }>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <PlusCircle className="h-4 w-4" />
-                                </Button>
-                           </CreateTaskDialog>
-                       </TableHead>
                     </TableRow>
                   ))}
                 </TableHeader>
@@ -452,20 +486,19 @@ export function ProjectTaskView({ initialTasks: projectTasks, title }: { initial
                         className="cursor-pointer"
                       >
                         {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id} onClick={cell.column.id === 'assignee' ? (e) => e.stopPropagation() : undefined}>
+                          <TableCell key={cell.id} onClick={(e) => ['select', 'actions', 'assignee'].includes(cell.column.id) ? e.stopPropagation() : undefined}>
                             {flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext()
                             )}
                           </TableCell>
                         ))}
-                         <TableCell />
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
                       <TableCell
-                        colSpan={columns.length + 1}
+                        colSpan={columns.length}
                         className="h-24 text-center"
                       >
                         No results.
@@ -537,6 +570,7 @@ export function ProjectTaskView({ initialTasks: projectTasks, title }: { initial
           onOpenChange={setIsDetailViewOpen}
           task={selectedTask}
           onUpdateTask={handleUpdateTask}
+          onDeleteTask={handleDeleteTask}
         />
       )}
     </>

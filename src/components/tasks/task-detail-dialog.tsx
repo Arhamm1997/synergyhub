@@ -15,6 +15,7 @@ import {
   Flag,
   CheckCircle,
   AlignLeft,
+  Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ import { Separator } from "@/components/ui/separator";
 import type { Task, Priority, TaskStatus } from "@/lib/types";
 import placeholderImages from "@/lib/placeholder-images.json";
 import { useToast } from "@/hooks/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -56,9 +58,10 @@ interface TaskDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   task: Task;
   onUpdateTask: (task: Task) => void;
+  onDeleteTask: (taskId: string) => void;
 }
 
-export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask }: TaskDetailDialogProps) {
+export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask, onDeleteTask }: TaskDetailDialogProps) {
     const { toast } = useToast();
     const [comment, setComment] = useState("");
 
@@ -88,7 +91,7 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask }: Tas
       status: values.status as TaskStatus
     };
     onUpdateTask(updatedTask);
-    onOpenChange(false);
+    toast({ title: "Task Updated", description: "The task details have been saved." });
   };
 
   const handleSendComment = () => {
@@ -99,12 +102,18 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask }: Tas
     });
     setComment("");
   }
+  
+  const handleDelete = () => {
+    onDeleteTask(task.id);
+    onOpenChange(false);
+    toast({ title: "Task Deleted", description: `Task "${task.title}" has been deleted.` });
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] grid grid-cols-1 md:grid-cols-3 gap-8 p-0">
         <div className="md:col-span-2 p-6 flex flex-col">
-          <DialogHeader className="mb-4">
+          <DialogHeader className="mb-4 flex-row justify-between items-start">
             <DialogTitle>
                 <FormField
                     control={form.control}
@@ -114,6 +123,25 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask }: Tas
                     )}
                 />
             </DialogTitle>
+             <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the task.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
           </DialogHeader>
           
           <div className="space-y-6 flex-grow">
