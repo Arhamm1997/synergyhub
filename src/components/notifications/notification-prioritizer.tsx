@@ -5,7 +5,7 @@ import {
   Bell,
   Loader2,
   AlertCircle,
-  Task as TaskIcon,
+  ClipboardList as TaskIcon,
   MessageSquare,
   FileText,
   CalendarClock,
