@@ -17,7 +17,7 @@ export interface Assignee {
 }
 
 export interface Contact {
-  name: string;
+  name:string;
   avatarUrl?: string;
   avatarHint?: string;
   isGroup?: boolean;
@@ -46,6 +46,8 @@ export interface Project {
   progress: number;
   deadline: string;
   team: Assignee[];
+  tasks: Task[];
+  description?: string;
 }
 
 export interface Client {

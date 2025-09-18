@@ -33,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { AssigneeSelect } from "@/components/clients/assignee-select";
 import type { Project } from "@/lib/types";
@@ -50,6 +51,7 @@ const teamMembers = [
 const formSchema = z.object({
   name: z.string().min(1, "Project name is required"),
   client: z.string().min(1, "Client is required"),
+  description: z.string().optional(),
   status: z.enum(["Not Started", "In Progress", "On Hold", "Completed", "Cancelled"]),
   deadline: z.date({ required_error: "Deadline is required." }),
   team: z.array(z.string()).min(1, "Please select at least one team member"),
@@ -60,7 +62,7 @@ type ProjectFormValues = z.infer<typeof formSchema>;
 interface ProjectDialogProps {
   children?: ReactNode;
   project?: Project;
-  onSave: (project: Omit<Project, 'id' | 'progress'> | Project) => void;
+  onSave: (project: Omit<Project, 'id' | 'progress' | 'tasks'> | Project) => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -75,6 +77,7 @@ export function ProjectDialog({ children, project, onSave, isOpen, onOpenChange 
       form.reset({
         name: project.name,
         client: project.client,
+        description: project.description || "",
         status: project.status,
         deadline: parseISO(project.deadline),
         team: project.team.map(t => t.name),
@@ -83,6 +86,7 @@ export function ProjectDialog({ children, project, onSave, isOpen, onOpenChange 
         form.reset({
             name: "",
             client: "",
+            description: "",
             status: "Not Started",
             deadline: undefined,
             team: [],
@@ -97,6 +101,7 @@ export function ProjectDialog({ children, project, onSave, isOpen, onOpenChange 
     const projectData = {
       name: values.name,
       client: values.client,
+      description: values.description,
       status: values.status,
       deadline: format(values.deadline, "yyyy-MM-dd"),
       team: selectedTeam,
@@ -105,7 +110,7 @@ export function ProjectDialog({ children, project, onSave, isOpen, onOpenChange 
     if (project) {
         onSave({ ...project, ...projectData });
     } else {
-        onSave(projectData as Omit<Project, 'id' | 'progress'>);
+        onSave(projectData as Omit<Project, 'id' | 'progress' | 'tasks'>);
     }
     
     onOpenChange(false);
@@ -131,6 +136,20 @@ export function ProjectDialog({ children, project, onSave, isOpen, onOpenChange 
                   <FormLabel>Project Name</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g. Mobile App Redesign" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Project Description</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Describe the project..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

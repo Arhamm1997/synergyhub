@@ -2,6 +2,7 @@
 "use client"
 
 import { useState } from "react";
+import Link from "next/link";
 import { PlusCircle, MoreVertical, FolderKanban } from "lucide-react";
 import {
   Card,
@@ -26,6 +27,7 @@ import { Progress } from "@/components/ui/progress";
 import placeholderImages from "@/lib/placeholder-images.json";
 import type { Project } from "@/lib/types";
 import { ProjectDialog } from "@/components/projects/project-dialog";
+import { initialTasks } from "@/components/tasks/task-data";
 
 const initialProjects: Project[] = [
   {
@@ -40,6 +42,8 @@ const initialProjects: Project[] = [
       { name: "David Chen", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageUrl!, avatarHint: 'man portrait professional' },
       { name: "Alex Moran", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl!, avatarHint: 'man portrait' },
     ],
+    tasks: initialTasks.slice(0, 4),
+    description: "A complete redesign of the flagship mobile application to improve user experience and modernize the interface. The project includes a new design system, updated navigation, and performance optimizations."
   },
   {
     id: "PROJ-002",
@@ -51,6 +55,8 @@ const initialProjects: Project[] = [
     team: [
       { name: "Maria Rodriguez", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageUrl!, avatarHint: 'woman professional'},
     ],
+    tasks: initialTasks.slice(4, 6),
+    description: "Integrate a new AI-powered chatbot into the customer support platform. The project involves API integration, training the AI model, and ensuring seamless handoff to human agents."
   },
   {
     id: "PROJ-003",
@@ -63,6 +69,8 @@ const initialProjects: Project[] = [
       { name: "Alex Moran", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl!, avatarHint: 'man portrait' },
       { name: "Sarah Lee", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!, avatarHint: 'woman portrait' },
     ],
+    tasks: [],
+    description: "Develop a new e-commerce platform from scratch. The project is currently on hold pending budget approval. Initial discovery and design phases are complete."
   },
   {
     id: "PROJ-004",
@@ -75,6 +83,8 @@ const initialProjects: Project[] = [
       { name: "David Chen", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageUrl!, avatarHint: 'man portrait professional' },
       { name: "Maria Rodriguez", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageUrl!, avatarHint: 'woman professional' },
     ],
+    tasks: initialTasks.slice(6, 8),
+    description: "Build a custom data analytics dashboard to provide real-time insights into sales and marketing performance. The dashboard will feature customizable widgets and data visualizations."
   },
 ];
 
@@ -89,10 +99,11 @@ export default function ProjectsPage() {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
 
-  const handleCreateProject = (newProject: Omit<Project, 'id' | 'progress'>) => {
+  const handleCreateProject = (newProject: Omit<Project, 'id' | 'progress' | 'tasks'>) => {
     const projectToAdd: Project = {
       id: `PROJ-${Math.floor(Math.random() * 1000)}`,
       progress: 0,
+      tasks: [],
       ...newProject
     }
     setProjects(prev => [projectToAdd, ...prev]);
@@ -158,7 +169,10 @@ export default function ProjectsPage() {
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleOpenEditDialog(project)}>View Details</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/dashboard/projects/${project.id}`}>View Details</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleOpenEditDialog(project)}>Edit Project</DropdownMenuItem>
                         <DropdownMenuItem>Archive Project</DropdownMenuItem>
                         <DropdownMenuItem 
                             className="text-destructive"
@@ -191,7 +205,9 @@ export default function ProjectsPage() {
             </CardContent>
             <CardFooter className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Deadline: {project.deadline}</span>
-              <Button variant="outline" onClick={() => handleOpenEditDialog(project)}>View Details</Button>
+               <Button variant="outline" asChild>
+                  <Link href={`/dashboard/projects/${project.id}`}>View Details</Link>
+              </Button>
             </CardFooter>
           </Card>
         ))}
@@ -199,7 +215,7 @@ export default function ProjectsPage() {
       {editingProject && (
         <ProjectDialog
             project={editingProject}
-            onSave={(editedProject) => handleUpdateProject({ ...editingProject, ...(editedProject as Omit<Project, 'id'>) })}
+            onSave={(editedProject) => handleUpdateProject({ ...editingProject, ...(editedProject as Omit<Project, 'id' | 'tasks'>) })}
             isOpen={isProjectDialogOpen && !!editingProject}
             onOpenChange={onDialogClose}
         />
