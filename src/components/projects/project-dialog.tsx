@@ -36,11 +36,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { AssigneeSelect } from "@/components/clients/assignee-select";
-import type { Project } from "@/lib/types";
+import type { Project, ProjectStatus } from "@/lib/types";
 import placeholderImages from "@/lib/placeholder-images.json";
 
-const projectStatuses = ["Not Started", "In Progress", "On Hold", "Completed", "Cancelled"];
-const clients = ["Innovate Corp", "QuantumLeap", "Stellar Solutions", "Apex Enterprises"];
 const teamMembers = [
     { name: "Alex Moran", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl!, avatarHint: "man portrait" },
     { name: "Sarah Lee", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!, avatarHint: "woman portrait" },
@@ -52,7 +50,7 @@ const formSchema = z.object({
   name: z.string().min(1, "Project name is required"),
   client: z.string().min(1, "Client is required"),
   description: z.string().optional(),
-  status: z.enum(["Not Started", "In Progress", "On Hold", "Completed", "Cancelled"]),
+  status: z.string().min(1, "Status is required."),
   deadline: z.date({ required_error: "Deadline is required." }),
   team: z.array(z.string()).min(1, "Please select at least one team member"),
 });
@@ -102,7 +100,7 @@ export function ProjectDialog({ children, project, onSave, isOpen, onOpenChange 
       name: values.name,
       client: values.client,
       description: values.description,
-      status: values.status,
+      status: values.status as ProjectStatus,
       deadline: format(values.deadline, "yyyy-MM-dd"),
       team: selectedTeam,
     };
@@ -163,16 +161,9 @@ export function ProjectDialog({ children, project, onSave, isOpen, onOpenChange 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Client</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a client" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {clients.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                     <FormControl>
+                        <Input placeholder="Enter client name" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -183,16 +174,9 @@ export function ProjectDialog({ children, project, onSave, isOpen, onOpenChange 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {projectStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                        <Input placeholder="e.g. In Progress" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import type { Project } from "@/lib/types";
+import type { Project, ProjectStatus } from "@/lib/types";
 import { ProjectDialog } from "@/components/projects/project-dialog";
 import { initialProjects } from "@/lib/project-data";
 
@@ -125,7 +125,7 @@ export default function ProjectsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                 <Badge variant={statusVariant[project.status]}>{project.status}</Badge>
+                 <Badge variant={statusVariant[project.status] || 'outline'}>{project.status}</Badge>
                  <div className="flex -space-x-2">
                     {project.team.map((member, index) => (
                         <Avatar key={index} className="h-8 w-8 border-2 border-card">
