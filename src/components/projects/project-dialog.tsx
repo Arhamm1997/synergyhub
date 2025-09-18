@@ -1,11 +1,11 @@
 
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -58,41 +58,62 @@ const formSchema = z.object({
 type ProjectFormValues = z.infer<typeof formSchema>;
 
 interface ProjectDialogProps {
-  children: ReactNode;
+  children?: ReactNode;
   project?: Project;
-  onCreateProject: (project: Omit<Project, 'id' | 'progress'>) => void;
+  onSave: (project: Omit<Project, 'id' | 'progress'> | Project) => void;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function ProjectDialog({ children, project, onCreateProject }: ProjectDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function ProjectDialog({ children, project, onSave, isOpen, onOpenChange }: ProjectDialogProps) {
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: project?.name || "",
-      client: project?.client || "",
-      status: project?.status || "Not Started",
-      team: project?.team.map(t => t.name) || [],
-    },
   });
+
+  useEffect(() => {
+    if (isOpen && project) {
+      form.reset({
+        name: project.name,
+        client: project.client,
+        status: project.status,
+        deadline: parseISO(project.deadline),
+        team: project.team.map(t => t.name),
+      });
+    } else if (isOpen && !project) {
+        form.reset({
+            name: "",
+            client: "",
+            status: "Not Started",
+            deadline: undefined,
+            team: [],
+        });
+    }
+  }, [project, form, isOpen]);
+
 
   function onSubmit(values: ProjectFormValues) {
     const selectedTeam = teamMembers.filter(member => values.team.includes(member.name));
 
-    const newProject = {
+    const projectData = {
       name: values.name,
       client: values.client,
       status: values.status,
       deadline: format(values.deadline, "yyyy-MM-dd"),
       team: selectedTeam,
     };
-    onCreateProject(newProject);
-    form.reset();
-    setIsOpen(false);
+    
+    if (project) {
+        onSave({ ...project, ...projectData });
+    } else {
+        onSave(projectData as Omit<Project, 'id' | 'progress'>);
+    }
+    
+    onOpenChange(false);
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{project ? "Edit Project" : "Add New Project"}</DialogTitle>
@@ -188,7 +209,7 @@ export function ProjectDialog({ children, project, onCreateProject }: ProjectDia
               />
             
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button type="submit">{project ? "Save Changes" : "Create Project"}</Button>
             </DialogFooter>
           </form>

@@ -78,6 +78,8 @@ const statusVariant: { [key: string]: "default" | "secondary" | "destructive" } 
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
 
   const handleCreateProject = (newProject: Omit<Project, 'id' | 'progress'>) => {
     const projectToAdd: Project = {
@@ -88,6 +90,21 @@ export default function ProjectsPage() {
     setProjects(prev => [projectToAdd, ...prev]);
   };
 
+  const handleUpdateProject = (updatedProject: Project) => {
+    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+    setEditingProject(null);
+  }
+
+  const handleOpenEditDialog = (project: Project) => {
+    setEditingProject(project);
+    setIsProjectDialogOpen(true);
+  }
+  
+  const onDialogClose = () => {
+    setEditingProject(null);
+    setIsProjectDialogOpen(false);
+  }
+
   return (
     <div className="flex flex-col gap-4">
        <div className="flex items-center justify-between">
@@ -95,7 +112,11 @@ export default function ProjectsPage() {
             <h1 className="text-2xl font-bold">Projects</h1>
             <p className="text-muted-foreground">Manage all your projects and their progress.</p>
          </div>
-        <ProjectDialog onCreateProject={handleCreateProject}>
+        <ProjectDialog 
+            onSave={handleCreateProject} 
+            isOpen={isProjectDialogOpen && !editingProject} 
+            onOpenChange={setIsProjectDialogOpen}
+        >
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
             Add New Project
@@ -142,11 +163,19 @@ export default function ProjectsPage() {
             </CardContent>
             <CardFooter className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Deadline: {project.deadline}</span>
-              <Button variant="outline">View Details</Button>
+              <Button variant="outline" onClick={() => handleOpenEditDialog(project)}>View Details</Button>
             </CardFooter>
           </Card>
         ))}
       </div>
+      {editingProject && (
+        <ProjectDialog
+            project={editingProject}
+            onSave={(editedProject) => handleUpdateProject({ ...editingProject, ...(editedProject as Omit<Project, 'id'>) })}
+            isOpen={isProjectDialogOpen && !!editingProject}
+            onOpenChange={onDialogClose}
+        />
+      )}
     </div>
   );
 }
