@@ -6,7 +6,7 @@ import type { Event } from 'react-big-calendar';
 export type Priority = "Urgent" | "High" | "Medium" | "Low" | "None";
 export type TaskStatus = "Backlog" | "Todo" | "In Progress" | "In Review" | "Done" | "Cancelled";
 export type ProjectStatus = "Not Started" | "In Progress" | "On Hold" | "Completed" | "Cancelled";
-export type ClientStatus = "Lead" | "Active" | "On Hold" | "Completed";
+export type ClientStatus = "Lead" | "Active" | "On Hold" | "Completed" | "Cancelled";
 export type UserStatus = "Online" | "Away" | "Offline";
 export type Department = "Engineering" | "Design" | "Marketing" | "Sales" | "Support" | "HR" | "Operations";
 
@@ -68,6 +68,7 @@ export interface Member {
     email: string;
     avatarUrl: string;
     avatarHint: string;
+    details?: string;
 }
 
 

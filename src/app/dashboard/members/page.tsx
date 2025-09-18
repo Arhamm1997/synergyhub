@@ -27,6 +27,7 @@ const initialMembers: Member[] = [
     email: "alex.moran@example.com",
     avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl!,
     avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageHint!,
+    details: "Manages the frontend and backend development teams. Expert in React and Node.js.",
   },
   {
     id: "2",
@@ -36,6 +37,7 @@ const initialMembers: Member[] = [
     email: "sarah.lee@example.com",
     avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!,
     avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageHint!,
+    details: "Leads the design team and is responsible for the overall user experience.",
   },
   {
     id: "3",
@@ -105,8 +107,9 @@ export default function MembersPage() {
                 <CardDescription>{member.role}</CardDescription>
                 <Badge variant={departmentVariant[member.department] || 'default'} className="mt-2">{member.department}</Badge>
             </CardHeader>
-            <CardContent className="text-center text-sm text-muted-foreground">
+            <CardContent className="text-center text-sm text-muted-foreground space-y-1">
               <p>{member.email}</p>
+              {member.details && <p className="text-xs">{member.details}</p>}
             </CardContent>
             <CardFooter className="flex justify-center gap-2">
               <Button variant="outline" size="icon"><Mail className="h-4 w-4" /></Button>

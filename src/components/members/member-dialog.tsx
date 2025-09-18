@@ -32,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import type { Member, Department } from "@/lib/types";
 
 const departments: Department[] = ["Engineering", "Design", "Marketing", "Sales", "Support", "HR", "Operations"];
@@ -41,6 +42,7 @@ const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   role: z.string().min(1, "Role is required"),
   department: z.enum(departments),
+  details: z.string().optional(),
 });
 
 type MemberFormValues = z.infer<typeof formSchema>;
@@ -60,6 +62,7 @@ export function MemberDialog({ children, member, onCreateMember }: MemberDialogP
       email: member?.email || "",
       role: member?.role || "",
       department: member?.department || "Engineering",
+      details: member?.details || "",
     },
   });
 
@@ -69,6 +72,7 @@ export function MemberDialog({ children, member, onCreateMember }: MemberDialogP
       email: values.email,
       role: values.role,
       department: values.department,
+      details: values.details,
       avatarUrl: `https://picsum.photos/seed/${values.name.split(' ').join('')}/200/200`,
       avatarHint: "person portrait",
     };
@@ -150,6 +154,19 @@ export function MemberDialog({ children, member, onCreateMember }: MemberDialogP
                 )}
               />
             </div>
+             <FormField
+              control={form.control}
+              name="details"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Manual Details</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Add any extra notes or details here..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
