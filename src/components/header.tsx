@@ -74,11 +74,11 @@ export function Header() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild><Link href="/dashboard"><LayoutGrid />Dashboard</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link href="/dashboard/settings"><User />Profile</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings />Settings</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link href="/dashboard"><LayoutGrid className="mr-2 h-4 w-4" />Dashboard</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link href="/dashboard/settings"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild><Link href="/"><LogOut />Log out</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link href="/"><LogOut className="mr-2 h-4 w-4" />Log out</Link></DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

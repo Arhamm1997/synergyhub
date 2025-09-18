@@ -66,6 +66,16 @@ export default function SignupPage() {
 
   return (
     <div className="w-full lg:grid lg:min-h-[100vh] lg:grid-cols-2 xl:min-h-[100vh]">
+      <div className="hidden bg-muted lg:block">
+        <Image
+          src="https://picsum.photos/seed/signup/1200/1800"
+          alt="Abstract art representing collaboration"
+          data-ai-hint="abstract collaboration"
+          width="1200"
+          height="1800"
+          className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+        />
+      </div>
        <div className="flex items-center justify-center py-12">
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
@@ -124,7 +134,7 @@ export default function SignupPage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
+                  <Button type="submit" className="w-full">
                     Sign Up
                   </Button>
                 </form>
@@ -138,16 +148,6 @@ export default function SignupPage() {
             </Link>
           </div>
         </div>
-      </div>
-      <div className="hidden bg-muted lg:block">
-        <Image
-          src="https://picsum.photos/seed/signup/1200/1800"
-          alt="Abstract art representing collaboration"
-          data-ai-hint="abstract collaboration"
-          width="1200"
-          height="1800"
-          className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-        />
       </div>
     </div>
   );

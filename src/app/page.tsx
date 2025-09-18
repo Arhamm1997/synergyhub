@@ -122,7 +122,7 @@ export default function LoginPage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
+                  <Button type="submit" className="w-full">
                     Login
                   </Button>
                 </form>
