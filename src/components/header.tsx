@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, LogOut, User, Settings, LayoutGrid } from "lucide-react";
+import { Search, LogOut, User, Settings, LayoutGrid, PlusCircle, UserPlus, Mail } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -13,8 +13,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { NotificationPrioritizer } from "@/components/notifications/notification-prioritizer";
@@ -29,6 +39,42 @@ const navItems = [
     { href: "/dashboard/settings", label: "Settings" },
 ];
 
+function InviteDialog() {
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon">
+                    <UserPlus className="h-5 w-5" />
+                    <span className="sr-only">Invite members</span>
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Invite Members</DialogTitle>
+                    <DialogDescription>
+                        Enter the email addresses of the people you want to invite.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="email" className="text-right">
+                            <Mail className="h-5 w-5 inline-block" />
+                        </Label>
+                        <Input
+                            id="email"
+                            placeholder="name@example.com"
+                            className="col-span-3"
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button type="submit">Send Invitation</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 export function Header() {
   const pathname = usePathname();
   const userAvatar = placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1');
@@ -39,12 +85,12 @@ export function Header() {
   };
   
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+    <header className="flex h-14 items-center gap-4 border-b bg-background/60 px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30 backdrop-blur-xl">
       <SidebarTrigger className="md:hidden" />
       <div className="w-full flex-1">
         <h1 className="font-semibold text-lg">{getPageTitle()}</h1>
       </div>
-      <div className="flex flex-1 items-center justify-end gap-4 md:ml-auto md:gap-2 lg:gap-4">
+      <div className="flex flex-1 items-center justify-end gap-2 md:ml-auto">
         <form className="ml-auto flex-1 sm:flex-initial hidden md:block">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -55,6 +101,7 @@ export function Header() {
             />
           </div>
         </form>
+        <InviteDialog />
         <NotificationPrioritizer />
         <ThemeToggle />
         <DropdownMenu>
