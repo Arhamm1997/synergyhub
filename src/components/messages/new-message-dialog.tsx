@@ -22,16 +22,17 @@ import {
 } from "@/components/ui/command";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Member } from "@/lib/types";
+import { useMemberStore } from "@/store/member-store";
 
 interface NewMessageDialogProps {
   children: React.ReactNode;
-  members: Member[];
   onSelect: (member: Member) => void;
 }
 
-export function NewMessageDialog({ children, members, onSelect }: NewMessageDialogProps) {
+export function NewMessageDialog({ children, onSelect }: NewMessageDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
+  const { members } = useMemberStore();
 
   const handleSelect = (member: Member) => {
     onSelect(member);

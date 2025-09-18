@@ -14,11 +14,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import placeholderImages from "@/lib/placeholder-images.json";
 import type { Member } from "@/lib/types";
 import { MemberDialog } from "@/components/members/member-dialog";
 import { useChatStore } from "@/store/chat-store";
-import { initialMembers } from "@/lib/member-data";
+import { useMemberStore } from "@/store/member-store";
 
 const departmentVariant: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
     "Engineering": "default",
@@ -31,21 +30,17 @@ const departmentVariant: { [key: string]: "default" | "secondary" | "destructive
 };
 
 export default function MembersPage() {
-  const [members, setMembers] = useState<Member[]>(initialMembers);
+  const { members, addMember, updateMember } = useMemberStore();
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
   const { openChat, setContact } = useChatStore();
 
   const handleCreateMember = (newMember: Omit<Member, 'id'>) => {
-    const memberToAdd: Member = {
-      id: `MEMBER-${Math.floor(Math.random() * 10000)}`,
-      ...newMember
-    }
-    setMembers(prev => [memberToAdd, ...prev]);
+    addMember(newMember);
   };
 
   const handleUpdateMember = (updatedMember: Member) => {
-    setMembers(prev => prev.map(m => m.id === updatedMember.id ? updatedMember : m));
+    updateMember(updatedMember);
     setEditingMember(null);
   }
 

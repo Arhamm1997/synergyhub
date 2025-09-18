@@ -28,7 +28,6 @@ import { useSearchParams } from "next/navigation";
 import type { Contact, Member } from "@/lib/types";
 import { ChatPanelContent } from "@/components/messages/chat-panel";
 import { useChatStore } from "@/store/chat-store";
-import { initialMembers } from "@/lib/member-data";
 import { NewMessageDialog } from "@/components/messages/new-message-dialog";
 
 
@@ -140,7 +139,7 @@ export default function MessagesPage() {
         <CardHeader className="p-4">
           <div className="flex items-center justify-between">
             <CardTitle>Chats</CardTitle>
-            <NewMessageDialog members={initialMembers} onSelect={handleNewMessageSelect}>
+            <NewMessageDialog onSelect={handleNewMessageSelect}>
               <Button variant="ghost" size="icon">
                 <MessageSquarePlus className="h-5 w-5" />
               </Button>

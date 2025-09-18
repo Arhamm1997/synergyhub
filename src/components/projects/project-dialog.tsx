@@ -37,14 +37,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { AssigneeSelect } from "@/components/clients/assignee-select";
 import type { Project, ProjectStatus } from "@/lib/types";
-import placeholderImages from "@/lib/placeholder-images.json";
-
-const teamMembers = [
-    { name: "Alex Moran", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl!, avatarHint: "man portrait" },
-    { name: "Sarah Lee", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!, avatarHint: "woman portrait" },
-    { name: "David Chen", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageUrl!, avatarHint: "man portrait professional" },
-    { name: "Maria Rodriguez", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageUrl!, avatarHint: "woman professional" },
-];
+import { useMemberStore } from "@/store/member-store";
 
 const formSchema = z.object({
   name: z.string().min(1, "Project name is required"),
@@ -66,6 +59,14 @@ interface ProjectDialogProps {
 }
 
 export function ProjectDialog({ children, project, onSave, isOpen, onOpenChange }: ProjectDialogProps) {
+  const { members } = useMemberStore();
+
+  const teamMembers = members.map(m => ({
+    name: m.name,
+    avatarUrl: m.avatarUrl,
+    avatarHint: m.avatarHint,
+  }))
+
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(formSchema),
   });
