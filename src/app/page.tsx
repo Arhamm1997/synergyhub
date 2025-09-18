@@ -136,7 +136,7 @@ export default function LoginPage() {
           data-ai-hint="abstract art"
           width="1200"
           height="1800"
-          className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+          className="h-full w-full object-cover dark:brightness-[0.4]"
         />
       </div>
     </div>
