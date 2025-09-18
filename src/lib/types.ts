@@ -7,6 +7,7 @@ export type TaskStatus = "Todo" | "In Progress" | "Done" | "Cancelled";
 export interface Task {
   id: string;
   title: string;
+  description?: string;
   assignee: {
     name: string;
     avatarUrl: string;
@@ -23,3 +24,5 @@ export interface SummaryStat {
   description: string;
   icon: LucideIcon;
 }
+
+    

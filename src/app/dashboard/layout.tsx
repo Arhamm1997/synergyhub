@@ -17,7 +17,7 @@ export default function DashboardLayout({
         <Sidebar>
           <SidebarNav />
         </Sidebar>
-        <div className="flex flex-col">
+        <div className="flex flex-col h-screen">
           <Header />
           <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 overflow-auto">
             {children}
@@ -27,3 +27,5 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
+
+    
