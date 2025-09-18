@@ -111,7 +111,7 @@ export function CreateTaskDialog({ onCreate }: CreateTaskDialogProps) {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
             <FormField
               control={form.control}
               name="title"
@@ -208,7 +208,7 @@ export function CreateTaskDialog({ onCreate }: CreateTaskDialogProps) {
                 control={form.control}
                 name="dueDate"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
+                  <FormItem className="flex flex-col pt-2">
                     <FormLabel>Due Date</FormLabel>
                     <DatePicker date={field.value} setDate={field.onChange} />
                     <FormMessage />

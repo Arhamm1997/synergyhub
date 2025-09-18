@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -8,6 +9,7 @@ import {
   MessageSquare,
   Users,
   Settings,
+  FolderKanban,
 } from "lucide-react";
 
 import { Logo } from "@/components/logo";
@@ -23,6 +25,7 @@ import { Separator } from "@/components/ui/separator";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
+  { href: "/dashboard/projects", label: "Projects", icon: FolderKanban },
   { href: "/dashboard/tasks", label: "Tasks", icon: ListChecks },
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
   { href: "/dashboard/clients", label: "Clients", icon: Users },
@@ -36,7 +39,7 @@ export function SidebarNav() {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
-    return pathname === href;
+    return pathname.startsWith(href);
   };
 
   return (

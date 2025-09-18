@@ -1,9 +1,10 @@
+
 "use client";
 
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, LogOut, User, Settings, LayoutGrid, PlusCircle, UserPlus, Mail } from "lucide-react";
+import { Search, LogOut, User, Settings, LayoutGrid, PlusCircle, UserPlus, Mail, FolderKanban, ListChecks, MessageSquare } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -32,11 +33,12 @@ import placeholderImages from "@/lib/placeholder-images.json";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/dashboard/tasks", label: "Tasks" },
-    { href: "/dashboard/messages", label: "Messages" },
-    { href: "/dashboard/clients", label: "Clients" },
-    { href: "/dashboard/settings", label: "Settings" },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
+    { href: "/dashboard/projects", label: "Projects", icon: FolderKanban },
+    { href: "/dashboard/tasks", label: "Tasks", icon: ListChecks },
+    { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
+    { href: "/dashboard/clients", label: "Clients", icon: User },
+    { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 function InviteDialog() {
