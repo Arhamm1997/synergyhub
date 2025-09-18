@@ -21,6 +21,7 @@ import {
   List,
   LayoutGrid,
   Calendar as CalendarIcon,
+  PlusCircle,
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
@@ -60,16 +61,17 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { CreateTaskDialog } from "@/components/tasks/create-task-dialog";
+import { TaskDetailDialog } from "@/components/tasks/task-detail-dialog";
 import { TaskCalendarView } from "@/components/tasks/task-calendar-view";
 import type { Task, TaskStatus } from "@/lib/types";
 import placeholderImages from "@/lib/placeholder-images.json";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useChatStore } from "@/store/chat-store";
 
 const initialTasks: Task[] = [
     {
         id: "TASK-8782",
         title: "Deploy V2 of the marketing website",
+        description: "Deploy the new version of the marketing website to the production environment. Ensure all assets are optimized and the site is responsive.",
         assignee: { name: "Sarah Lee", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!, avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageHint! },
         priority: "High",
         status: "In Progress",
@@ -78,6 +80,7 @@ const initialTasks: Task[] = [
     {
         id: "TASK-7878",
         title: "Fix authentication bug on mobile",
+        description: "Users are reporting issues logging in on mobile devices. The issue seems to be related to the new authentication flow.",
         assignee: { name: "David Chen", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageUrl!, avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageHint! },
         priority: "High",
         status: "Todo",
@@ -86,6 +89,7 @@ const initialTasks: Task[] = [
     {
         id: "TASK-4567",
         title: "Design new client onboarding flow",
+        description: "Create a new design for the client onboarding flow. The design should be intuitive and user-friendly.",
         assignee: { name: "Maria Rodriguez", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageUrl!, avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageHint! },
         priority: "Medium",
         status: "In Progress",
@@ -94,6 +98,7 @@ const initialTasks: Task[] = [
     {
         id: "TASK-9876",
         title: "Write Q3 performance report",
+        description: "Compile the Q3 performance report for the marketing team. The report should include key metrics and a summary of the quarter's performance.",
         assignee: { name: "Alex Moran", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl!, avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageHint! },
         priority: "Low",
         status: "Done",
@@ -102,6 +107,7 @@ const initialTasks: Task[] = [
     {
         id: "TASK-2345",
         title: "Update API documentation for v3",
+        description: "Update the API documentation to reflect the changes in v3. The documentation should be clear and comprehensive.",
         assignee: { name: "David Chen", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageUrl!, avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageHint! },
         priority: "Medium",
         status: "Todo",
@@ -110,6 +116,7 @@ const initialTasks: Task[] = [
     {
         id: "TASK-6789",
         title: "Research new email marketing platforms",
+        description: "Research and compare new email marketing platforms. The goal is to find a platform that is more cost-effective and has better features.",
         assignee: { name: "Sarah Lee", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!, avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageHint! },
         priority: "Low",
         status: "Done",
@@ -118,6 +125,7 @@ const initialTasks: Task[] = [
     {
       id: "TASK-1122",
       title: "Create social media content calendar",
+      description: "Create a content calendar for all social media channels for the next month. The calendar should include post ideas and a schedule.",
       assignee: { name: "Maria Rodriguez", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageUrl!, avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageHint! },
       priority: "Medium",
       status: "Todo",
@@ -126,6 +134,7 @@ const initialTasks: Task[] = [
     {
       id: "TASK-3344",
       title: "A/B test new CTA buttons",
+      description: "Run an A/B test on the new CTA buttons on the homepage. The goal is to see which button has a higher conversion rate.",
       assignee: { name: "Alex Moran", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl!, avatarHint: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageHint! },
       priority: "High",
       status: "In Progress",
@@ -133,15 +142,19 @@ const initialTasks: Task[] = [
     }
 ];
 
-const priorityVariant: { [key in Task["priority"]]: "destructive" | "secondary" | "default" } = {
+export const priorityVariant: { [key in Task["priority"]]: "destructive" | "secondary" | "default" | "outline" } = {
+  Urgent: "destructive",
   High: "destructive",
   Medium: "secondary",
   Low: "default",
+  None: "outline",
 };
 
-const statusVariant: { [key in Task["status"]]: "outline" | "default" | "secondary" | "destructive" } = {
+export const statusVariant: { [key in Task["status"]]: "outline" | "default" | "secondary" | "destructive" } = {
+  "Backlog": "outline",
   "Todo": "outline",
   "In Progress": "default",
+  "In Review": "secondary",
   "Done": "secondary",
   "Cancelled": "destructive",
 }
@@ -249,7 +262,8 @@ export const columns: ColumnDef<Task>[] = [
   {
     id: "actions",
     enableHiding: false,
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
+      const meta = table.options.meta as any;
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -260,8 +274,7 @@ export const columns: ColumnDef<Task>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem>Edit Task</DropdownMenuItem>
-            <DropdownMenuItem>View Details</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => meta.handleTaskClick(row.original)}>View/Edit Details</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive">Delete Task</DropdownMenuItem>
           </DropdownMenuContent>
@@ -304,7 +317,6 @@ const KanbanCard = ({ task, index, onCardClick }: { task: Task; index: number; o
 
 
 export default function TasksPage() {
-  const { openChat, setContact } = useChatStore();
   const [tasks, setTasks] = React.useState<Task[]>(initialTasks);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -313,9 +325,12 @@ export default function TasksPage() {
   const [activeTab, setActiveTab] = React.useState("grid");
   const isMobile = useIsMobile();
 
+  const [selectedTask, setSelectedTask] = React.useState<Task | null>(null);
+  const [isDetailViewOpen, setIsDetailViewOpen] = React.useState(false);
+
   React.useEffect(() => {
     if (isMobile) {
-        setColumnVisibility({ id: false, assignee: false, priority: false, dueDate: false });
+        setColumnVisibility({ id: false, assignee: false, priority: false, dueDate: false, actions: false });
     } else {
         setColumnVisibility({ id: false });
     }
@@ -332,7 +347,6 @@ export default function TasksPage() {
         
         if (!taskToMove) return prevTasks;
         
-        // If dropped in the same column, just reorder
         if (source.droppableId === destination.droppableId) {
              const items = newTasks.filter(t => t.status === source.droppableId);
              const [reorderedItem] = items.splice(source.index, 1);
@@ -342,7 +356,6 @@ export default function TasksPage() {
              return [...otherItems, ...items].sort((a,b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
         }
 
-        // If moved to a different column, update status and reorder
         taskToMove.status = destination.droppableId as TaskStatus;
         const sourceItems = newTasks.filter(t => t.status === source.droppableId && t.id !== draggableId);
         const destItems = newTasks.filter(t => t.status === destination.droppableId);
@@ -353,6 +366,15 @@ export default function TasksPage() {
         return [...otherItems, ...sourceItems, ...destItems].sort((a,b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
     });
 };
+
+ const handleTaskClick = (task: Task) => {
+    setSelectedTask(task);
+    setIsDetailViewOpen(true);
+  };
+
+  const handleUpdateTask = (updatedTask: Task) => {
+    setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
+  };
 
 
   const table = useReactTable({
@@ -372,28 +394,23 @@ export default function TasksPage() {
       columnVisibility,
       rowSelection,
     },
+     meta: {
+      handleTaskClick,
+    },
   });
 
   const kanbanColumns: { title: TaskStatus; tasks: Task[] }[] = [
+    { title: "Backlog", tasks: tasks.filter((t) => t.status === "Backlog") },
     { title: "Todo", tasks: tasks.filter((t) => t.status === "Todo") },
     { title: "In Progress", tasks: tasks.filter((t) => t.status === "In Progress") },
+    { title: "In Review", tasks: tasks.filter((t) => t.status === "In Review") },
     { title: "Done", tasks: tasks.filter((t) => t.status === "Done") },
     { title: "Cancelled", tasks: tasks.filter((t) => t.status === "Cancelled") },
   ];
 
-  const handleTaskClick = (task: Task) => {
-    const contact = {
-      name: task.assignee.name,
-      avatarUrl: task.assignee.avatarUrl,
-      avatarHint: task.assignee.avatarHint,
-      status: 'Online' // This can be made dynamic later
-    };
-    setContact(contact);
-    openChat();
-  };
-
 
   return (
+    <>
     <Card className="h-full flex flex-col">
       <CardHeader>
         <div className="flex items-center justify-between">
@@ -458,14 +475,14 @@ export default function TasksPage() {
           </div>
           
           <TabsContent value="grid" className="flex-grow">
-            <div className="rounded-md border">
+            <div className="rounded-md border relative">
               <Table>
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
                       {headerGroup.headers.map((header) => {
                         return (
-                          <TableHead key={header.id}>
+                          <TableHead key={header.id} style={{width: header.getSize() !== 150 ? header.getSize() : undefined}}>
                             {header.isPlaceholder
                               ? null
                               : flexRender(
@@ -475,6 +492,11 @@ export default function TasksPage() {
                           </TableHead>
                         );
                       })}
+                       <TableHead className="w-[40px]">
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <PlusCircle className="h-4 w-4" />
+                            </Button>
+                       </TableHead>
                     </TableRow>
                   ))}
                 </TableHeader>
@@ -484,7 +506,7 @@ export default function TasksPage() {
                       <TableRow
                         key={row.id}
                         data-state={row.getIsSelected() && "selected"}
-                        onClick={() => handleTaskClick(row.original)}
+                        onClick={() => !isMobile && handleTaskClick(row.original)}
                         className="cursor-pointer"
                       >
                         {row.getVisibleCells().map((cell) => (
@@ -495,12 +517,13 @@ export default function TasksPage() {
                             )}
                           </TableCell>
                         ))}
+                         <TableCell />
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
                       <TableCell
-                        colSpan={columns.length}
+                        colSpan={columns.length + 1}
                         className="h-24 text-center"
                       >
                         No results.
@@ -537,7 +560,7 @@ export default function TasksPage() {
           </TabsContent>
           <TabsContent value="board" className="flex-grow overflow-hidden">
              <DragDropContext onDragEnd={onDragEnd}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 py-4 h-full overflow-x-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 py-4 h-full overflow-x-auto">
                 {kanbanColumns.map((column) => (
                   <Droppable key={column.title} droppableId={column.title}>
                     {(provided, snapshot) => (
@@ -566,5 +589,16 @@ export default function TasksPage() {
         </Tabs>
       </CardContent>
     </Card>
+     {selectedTask && (
+        <TaskDetailDialog
+          open={isDetailViewOpen}
+          onOpenChange={setIsDetailViewOpen}
+          task={selectedTask}
+          onUpdateTask={handleUpdateTask}
+        />
+      )}
+    </>
   );
 }
+
+    

@@ -39,8 +39,8 @@ import { DatePicker } from "@/components/ui/date-picker";
 import type { Task, Priority, TaskStatus } from "@/lib/types";
 import placeholderImages from "@/lib/placeholder-images.json";
 
-const priorities: Priority[] = ["Low", "Medium", "High"];
-const statuses: TaskStatus[] = ["Todo", "In Progress", "Done", "Cancelled"];
+const priorities: Priority[] = ["Urgent", "High", "Medium", "Low", "None"];
+const statuses: TaskStatus[] = ["Backlog", "Todo", "In Progress", "In Review", "Done", "Cancelled"];
 const assignees = [
     { name: "Alex Moran", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl!, avatarHint: "man portrait" },
     { name: "Sarah Lee", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!, avatarHint: "woman portrait" },
@@ -52,8 +52,8 @@ const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   assigneeName: z.string().min(1, "Assignee is required"),
-  priority: z.enum(["Low", "Medium", "High"]),
-  status: z.enum(["Todo", "In Progress", "Done", "Cancelled"]),
+  priority: z.enum(["Urgent", "High", "Medium", "Low", "None"]),
+  status: z.enum(["Backlog", "Todo", "In Progress", "In Review", "Done", "Cancelled"]),
   dueDate: z.date({ required_error: "Due date is required." }),
 });
 
@@ -226,3 +226,5 @@ export function CreateTaskDialog({ onCreate }: CreateTaskDialogProps) {
     </Dialog>
   );
 }
+
+    
