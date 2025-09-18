@@ -299,30 +299,40 @@ export default function TasksPage() {
   const [tasks, setTasks] = React.useState<Task[]>(initialTasks);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({ id: false });
   const [rowSelection, setRowSelection] = React.useState({});
+  const [activeTab, setActiveTab] = React.useState("grid");
 
   const onDragEnd = (result: DropResult) => {
     const { source, destination, draggableId } = result;
 
     if (!destination) return;
     
-    if (source.droppableId === destination.droppableId && source.index === destination.index) {
-        return;
-    }
-
     setTasks(prevTasks => {
-        const newTasks = [...prevTasks];
+        const newTasks = Array.from(prevTasks);
         const taskToMove = newTasks.find(t => t.id === draggableId);
         
         if (!taskToMove) return prevTasks;
-
-        taskToMove.status = destination.droppableId as TaskStatus;
         
-        const reorderedTasks = newTasks.filter(t => t.id !== draggableId);
-        reorderedTasks.splice(destination.index, 0, taskToMove);
+        // If dropped in the same column, just reorder
+        if (source.droppableId === destination.droppableId) {
+             const items = newTasks.filter(t => t.status === source.droppableId);
+             const [reorderedItem] = items.splice(source.index, 1);
+             items.splice(destination.index, 0, reorderedItem);
+             
+             const otherItems = newTasks.filter(t => t.status !== source.droppableId);
+             return [...otherItems, ...items].sort((a,b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
+        }
 
-        return reorderedTasks;
+        // If moved to a different column, update status and reorder
+        taskToMove.status = destination.droppableId as TaskStatus;
+        const sourceItems = newTasks.filter(t => t.status === source.droppableId && t.id !== draggableId);
+        const destItems = newTasks.filter(t => t.status === destination.droppableId);
+        destItems.splice(destination.index, 0, taskToMove);
+
+        const otherItems = newTasks.filter(t => t.status !== source.droppableId && t.status !== destination.droppableId);
+        
+        return [...otherItems, ...sourceItems, ...destItems].sort((a,b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
     });
 };
 
@@ -356,49 +366,55 @@ export default function TasksPage() {
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
-        <CardTitle>Tasks</CardTitle>
-        <CardDescription>
-          Organize, assign, and track all your team's tasks from here.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex-grow">
-        <Tabs defaultValue="grid" className="h-full flex flex-col">
-          <div className="flex items-center justify-between">
-            <TabsList>
-              <TabsTrigger value="grid" className="gap-2"><List /> List</TabsTrigger>
-              <TabsTrigger value="board" className="gap-2"><LayoutGrid /> Board</TabsTrigger>
-              <TabsTrigger value="calendar" className="gap-2"><CalendarIcon /> Calendar</TabsTrigger>
-            </TabsList>
-             <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="ml-auto">
-                    Columns <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {table
-                    .getAllColumns()
-                    .filter((column) => column.getCanHide())
-                    .map((column) => {
-                      return (
-                        <DropdownMenuCheckboxItem
-                          key={column.id}
-                          className="capitalize"
-                          checked={column.getIsVisible()}
-                          onCheckedChange={(value) =>
-                            column.toggleVisibility(!!value)
-                          }
-                        >
-                          {column.id}
-                        </DropdownMenuCheckboxItem>
-                      );
-                    })}
-                </DropdownMenuContent>
-              </DropdownMenu>
+        <div className="flex items-center justify-between">
+            <div>
+                <CardTitle>Tasks</CardTitle>
+                <CardDescription>
+                Organize, assign, and track all your team's tasks from here.
+                </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+                 {activeTab === 'grid' && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="ml-auto">
+                            Columns <ChevronDown className="ml-2 h-4 w-4" />
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                        {table
+                            .getAllColumns()
+                            .filter((column) => column.getCanHide())
+                            .map((column) => {
+                            return (
+                                <DropdownMenuCheckboxItem
+                                key={column.id}
+                                className="capitalize"
+                                checked={column.getIsVisible()}
+                                onCheckedChange={(value) =>
+                                    column.toggleVisibility(!!value)
+                                }
+                                >
+                                {column.id}
+                                </DropdownMenuCheckboxItem>
+                            );
+                            })}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                 )}
               <CreateTaskDialog onCreate={ (newTask) => setTasks(prev => [newTask, ...prev]) } />
             </div>
-          </div>
+        </div>
+
+      </CardHeader>
+      <CardContent className="flex-grow flex flex-col">
+        <Tabs defaultValue="grid" className="h-full flex flex-col" onValueChange={setActiveTab}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="grid" className="gap-2"><List /> List</TabsTrigger>
+            <TabsTrigger value="board" className="gap-2"><LayoutGrid /> Board</TabsTrigger>
+            <TabsTrigger value="calendar" className="gap-2"><CalendarIcon /> Calendar</TabsTrigger>
+          </TabsList>
+          
           <TabsContent value="grid" className="flex-grow">
             <div className="py-4">
               <Input
@@ -518,5 +534,3 @@ export default function TasksPage() {
     </Card>
   );
 }
-
-    

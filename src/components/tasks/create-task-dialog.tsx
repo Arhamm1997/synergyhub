@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { PlusCircle } from "lucide-react";
+import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +38,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import type { Task, Priority, TaskStatus } from "@/lib/types";
 import placeholderImages from "@/lib/placeholder-images.json";
-import { format } from "date-fns";
 
 const priorities: Priority[] = ["Low", "Medium", "High"];
 const statuses: TaskStatus[] = ["Todo", "In Progress", "Done", "Cancelled"];
@@ -54,7 +54,7 @@ const formSchema = z.object({
   assigneeName: z.string().min(1, "Assignee is required"),
   priority: z.enum(["Low", "Medium", "High"]),
   status: z.enum(["Todo", "In Progress", "Done", "Cancelled"]),
-  dueDate: z.date(),
+  dueDate: z.date({ required_error: "Due date is required." }),
 });
 
 type CreateTaskFormValues = z.infer<typeof formSchema>;
@@ -208,11 +208,9 @@ export function CreateTaskDialog({ onCreate }: CreateTaskDialogProps) {
                 control={form.control}
                 name="dueDate"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Due Date</FormLabel>
-                    <FormControl>
-                      <DatePicker date={field.value} setDate={field.onChange} />
-                    </FormControl>
+                    <DatePicker date={field.value} setDate={field.onChange} />
                     <FormMessage />
                   </FormItem>
                 )}

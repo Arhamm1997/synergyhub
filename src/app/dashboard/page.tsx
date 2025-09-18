@@ -1,3 +1,4 @@
+
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { TaskProgressChart } from "@/components/dashboard/task-progress-chart";
 import { RecentTasks } from "@/components/dashboard/recent-tasks";
@@ -6,10 +7,12 @@ import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
-       <CardHeader className="p-0">
-        <CardTitle>Welcome Back, Alex!</CardTitle>
-        <CardDescription>Here's a summary of your team's activity.</CardDescription>
-      </CardHeader>
+       <div className="flex items-center justify-between">
+         <div>
+            <h1 className="text-2xl font-bold">Welcome Back, Alex!</h1>
+            <p className="text-muted-foreground">Here's a summary of your team's activity.</p>
+         </div>
+      </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <SummaryCards />
       </div>

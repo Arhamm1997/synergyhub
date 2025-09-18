@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -8,6 +9,7 @@ import {
   Paperclip,
   Mic,
   Send,
+  Users as UsersIcon,
 } from "lucide-react";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,6 +33,7 @@ const contacts = [
     lastMessage: "Sounds good, I'll review the new designs.",
     time: "10:42 AM",
     unread: 2,
+    status: "Online",
   },
   {
     name: "David Chen",
@@ -39,6 +42,7 @@ const contacts = [
     lastMessage: "Can you check the latest PR?",
     time: "9:30 AM",
     unread: 0,
+    status: "Away",
   },
   {
     name: "Maria Rodriguez",
@@ -47,6 +51,7 @@ const contacts = [
     lastMessage: "The client approved the mockups!",
     time: "Yesterday",
     unread: 0,
+    status: "Offline",
   },
   {
     name: "Project Phoenix Team",
@@ -85,6 +90,8 @@ const messages = [
 ];
 
 export default function MessagesPage() {
+  const activeContact = contacts[0]; // Example: Sarah Lee is the active chat
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] lg:grid-cols-[350px_1fr] h-[calc(100vh-100px)] gap-4">
       {/* Contacts List */}
@@ -102,7 +109,7 @@ export default function MessagesPage() {
               <div
                 key={index}
                 className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
-                  contact.name === "Sarah Lee"
+                  contact.name === activeContact.name
                     ? "bg-muted"
                     : "hover:bg-muted"
                 }`}
@@ -143,15 +150,18 @@ export default function MessagesPage() {
           <div className="flex items-center gap-3">
             <Avatar>
               <AvatarImage
-                src={placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl}
-                alt="Sarah Lee"
-                data-ai-hint={placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageHint}
+                src={activeContact.avatarUrl}
+                alt={activeContact.name}
+                data-ai-hint={activeContact.avatarHint}
               />
-              <AvatarFallback>SL</AvatarFallback>
+              <AvatarFallback>{activeContact.name.substring(0, 2)}</AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-semibold">Sarah Lee</p>
-              <p className="text-sm text-muted-foreground">Online</p>
+              <p className="font-semibold">{activeContact.name}</p>
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                 <span className={`h-2 w-2 rounded-full ${activeContact.status === 'Online' ? 'bg-green-500' : activeContact.status === 'Away' ? 'bg-yellow-500' : 'bg-gray-400'}`}></span>
+                {activeContact.status}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -190,7 +200,7 @@ export default function MessagesPage() {
                 >
                   <p className="text-sm">{message.text}</p>
                   <p
-                    className={`text-xs mt-1 ${
+                    className={`text-xs mt-1 text-right ${
                       message.isMe
                         ? "text-primary-foreground/70"
                         : "text-muted-foreground"
@@ -230,28 +240,5 @@ export default function MessagesPage() {
         </div>
       </Card>
     </div>
-  );
-}
-
-
-function UsersIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
   );
 }
