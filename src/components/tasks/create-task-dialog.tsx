@@ -172,7 +172,7 @@ export function CreateTaskDialog({ onCreate }: CreateTaskDialogProps) {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select priority" />
-                        </SelectTrigger>
+                        </Trigger>
                       </FormControl>
                       <SelectContent>
                         {priorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
@@ -228,5 +228,3 @@ export function CreateTaskDialog({ onCreate }: CreateTaskDialogProps) {
     </Dialog>
   );
 }
-
-    
