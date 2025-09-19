@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import {
   ColumnDef,
@@ -58,37 +58,23 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-
-type Business = {
-  id: string;
-  name: string;
-  owner: {
-    name: string;
-    avatarUrl?: string;
-    avatarHint?: string;
-  };
-  phone?: string;
-  type: string;
-  status: "Active" | "Inactive" | "Lead" | "In Progress";
-  notes: string;
-};
-
-const mockMembers = [
-  { name: "Arham", avatarUrl: "", avatarHint: "person" },
-  { name: "Shan", avatarUrl: "", avatarHint: "person" },
-  { name: "Usman", avatarUrl: "", avatarHint: "person" },
-  { name: "Hamza", avatarUrl: "", avatarHint: "person" },
-];
+import type { Business } from "@/lib/types";
+import { useMemberStore } from "@/store/member-store";
+import { BusinessDialog } from "@/components/business/business-dialog";
 
 export default function BusinessPage() {
   const { toast } = useToast();
   const [data, setData] = useState<Business[]>([]);
+  const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
+  const [isBusinessDialogOpen, setIsBusinessDialogOpen] = useState(false);
+  
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { members } = useMemberStore();
   
   const handleDelete = (businessId: string) => {
     setData(prev => prev.filter(b => b.id !== businessId));
@@ -101,6 +87,34 @@ export default function BusinessPage() {
     table.resetRowSelection();
     toast({ title: `${selectedIds.length} Businesses Deleted` });
   };
+
+  const handleSaveBusiness = (businessData: Omit<Business, 'id'> | Business) => {
+    if ('id' in businessData) {
+      // Editing existing business
+      setData(prev => prev.map(b => b.id === businessData.id ? { ...b, ...businessData } as Business : b));
+      toast({ title: "Business Updated", description: "The business details have been saved."});
+    } else {
+      // Creating new business
+      const businessToAdd: Business = {
+        id: `BIZ-${Math.floor(Math.random() * 10000)}`,
+        ...businessData
+      } as Business;
+      setData(prev => [businessToAdd, ...prev]);
+      toast({ title: "Business Created", description: "The new business has been added."});
+    }
+    setEditingBusiness(null);
+    setIsBusinessDialogOpen(false);
+  };
+
+  const handleOpenEditDialog = (business: Business) => {
+    setEditingBusiness(business);
+    setIsBusinessDialogOpen(true);
+  }
+  
+  const onDialogClose = () => {
+    setEditingBusiness(null);
+    setIsBusinessDialogOpen(false);
+  }
 
   const columns: ColumnDef<Business>[] = [
     {
@@ -167,7 +181,6 @@ export default function BusinessPage() {
           "Active": "default",
           "Inactive": "outline",
           "Lead": "secondary",
-          "In Progress": "default"
         } as const;
         return <Badge variant={variants[status]}>{status}</Badge>;
       }
@@ -191,7 +204,7 @@ export default function BusinessPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem>Edit Business</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleOpenEditDialog(business)}>Edit Business</DropdownMenuItem>
               <DropdownMenuSeparator />
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -253,85 +266,61 @@ export default function BusinessPage() {
     });
 
     try {
-      const reader = new FileReader();
-      
-      reader.onload = (e) => {
-          const data = e.target?.result;
-          const workbook = XLSX.read(data, { type: 'array', cellDates: true, cellNF: true });
-          const sheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[sheetName];
-          const rawData: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
-          
-          const newBusinesses: Business[] = [];
-          
-          if (rawData.length > 5) {
-            for (let i = 5; i < rawData.length; i++) {
-                const row = rawData[i];
-                if (!row[0]) continue;
-                
-                const businessName = row[0] || '';
-                const assignedInfo = row[1] || '';
-                const reportingDate = row[4] ? new Date(row[4]).toLocaleDateString() : "";
-                
-                let ownerName = "Not Assigned";
-                if (assignedInfo.toString().toLowerCase().includes("arham")) ownerName = "Arham";
-                else if (assignedInfo.toString().toLowerCase().includes("shan")) ownerName = "Shan";
-                else if (assignedInfo.toString().toLowerCase().includes("usman")) ownerName = "Usman";
-                else if (assignedInfo.toString().toLowerCase().includes("hamza")) ownerName = "Hamza";
-                
-                const owner = mockMembers.find(m => m.name === ownerName) || 
-                             { name: ownerName, avatarUrl: '', avatarHint: 'person' };
-                
-                let status: Business["status"] = "Lead";
-                if (reportingDate) status = "Active";
-                if (assignedInfo && assignedInfo.toString().toLowerCase().includes("done")) status = "In Progress";
-                
-                let businessType = "Service";
-                const lowerName = businessName.toLowerCase();
-                if (lowerName.includes("clean")) businessType = "Cleaning Services";
-                else if (lowerName.includes("heating") || lowerName.includes("cooling")) businessType = "HVAC";
-                else if (lowerName.includes("tech") || lowerName.includes("IT")) businessType = "Technology";
-                else if (lowerName.includes("construction") || lowerName.includes("remodel")) businessType = "Construction";
-                else if (lowerName.includes("transport") || lowerName.includes("towing")) businessType = "Transportation";
-                else if (lowerName.includes("inspection")) businessType = "Home Services";
-                else if (lowerName.includes("restoration")) businessType = "Restoration Services";
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const data = e.target?.result;
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
 
-                const notesParts = [];
-                if (reportingDate) notesParts.push(`Reporting: ${reportingDate}`);
-                if (assignedInfo) notesParts.push(`Assignment: ${assignedInfo}`);
-                if (row[5]) notesParts.push(`KW Research: ${row[5]}`);
-                if (row[6]) notesParts.push(`Web: ${row[6]}`);
-                if (row[7]) notesParts.push(`Content: ${row[7]}`);
-                
-                newBusinesses.push({
-                  id: `IMPORT-${Date.now()}-${i}`,
-                  name: businessName,
-                  owner: owner,
-                  phone: "",
-                  type: businessType,
-                  status: status,
-                  notes: notesParts.join('. ') + '.',
+                const newBusinesses: Business[] = jsonData.map((row, index) => {
+                    const ownerName = row["Assigned To"] || "Not Assigned";
+                    const owner = members.find(m => m.name.toLowerCase() === ownerName.toLowerCase()) || 
+                                  members.find(m => m.name === "Not Assigned") || 
+                                  { name: ownerName, avatarUrl: '', avatarHint: 'person' };
+                    
+                    return {
+                        id: `IMPORT-${Date.now()}-${index}`,
+                        name: row["Business Name"] || '',
+                        owner: owner,
+                        phone: row["Phone Number"] || '',
+                        type: row["Business Type"] || 'Service',
+                        status: row["Status"] || 'Lead',
+                        notes: row["Notes"] || '',
+                    };
                 });
+                
+                setData(prev => [...prev, ...newBusinesses]);
+                toast({
+                    title: "Import Successful",
+                    description: `${newBusinesses.length} businesses have been added.`,
+                });
+            } catch(error) {
+                 console.error("Failed to process Excel file", error);
+                 toast({
+                    variant: "destructive",
+                    title: "Import Failed",
+                    description: "Could not process the selected file. Please ensure it has the correct columns (Business Name, Assigned To, Phone Number, Business Type, Status, Notes).",
+                 });
+            } finally {
+                 setIsLoading(false);
+                 if (event.target) event.target.value = '';
             }
-          }
+        };
 
-          setData(prev => [...prev, ...newBusinesses]);
-          toast({
-            title: "Import Successful",
-            description: `${newBusinesses.length} businesses have been added.`,
-          });
-      };
+        reader.onerror = (error) => {
+            console.error("Failed to read file", error);
+            toast({
+                variant: "destructive",
+                title: "Import Failed",
+                description: "Could not read the selected file.",
+            });
+            setIsLoading(false);
+        };
 
-      reader.onerror = (error) => {
-        console.error("Failed to read file", error);
-        toast({
-          variant: "destructive",
-          title: "Import Failed",
-          description: "Could not read the selected file.",
-        });
-      };
-
-      reader.readAsArrayBuffer(file);
+        reader.readAsArrayBuffer(file);
       
     } catch (error) {
       console.error("Failed to import Excel file", error);
@@ -340,9 +329,7 @@ export default function BusinessPage() {
         title: "Import Failed",
         description: "Could not process the selected file. Please ensure it is a valid Excel file.",
       });
-    } finally {
       setIsLoading(false);
-      if (event.target) event.target.value = '';
     }
   };
 
@@ -368,10 +355,12 @@ export default function BusinessPage() {
                     <Upload className="mr-2 h-4 w-4" />
                     {isLoading ? "Importing..." : "Import from Excel"}
                 </Button>
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Business
-                </Button>
+                <BusinessDialog onSave={handleSaveBusiness} isOpen={isBusinessDialogOpen && !editingBusiness} onOpenChange={setIsBusinessDialogOpen}>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Business
+                    </Button>
+                </BusinessDialog>
             </div>
         </div>
       </CardHeader>
@@ -477,7 +466,7 @@ export default function BusinessPage() {
                       colSpan={columns.length}
                       className="h-24 text-center"
                     >
-                      No businesses found. Import an Excel file to get started.
+                      No businesses found. Import an Excel file or add a new business to get started.
                     </TableCell>
                   </TableRow>
                 )}
@@ -509,8 +498,15 @@ export default function BusinessPage() {
             </div>
           </div>
       </CardContent>
+       {editingBusiness && (
+        <BusinessDialog
+            business={editingBusiness}
+            onSave={(editedBusiness) => handleSaveBusiness({ ...editingBusiness, ...(editedBusiness as Omit<Business, 'id'>) })}
+            isOpen={isBusinessDialogOpen && !!editingBusiness}
+            onOpenChange={onDialogClose}
+        />
+      )}
     </Card>
   );
 }
-
     

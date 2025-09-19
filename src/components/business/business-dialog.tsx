@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -14,6 +14,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -34,8 +35,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import type { Business } from "@/lib/types";
 import { useMemberStore } from "@/store/member-store";
-import { initialMembers } from "@/lib/member-data";
-
 
 const formSchema = z.object({
   name: z.string().min(1, "Business name is required"),
@@ -49,13 +48,14 @@ const formSchema = z.object({
 type BusinessFormValues = z.infer<typeof formSchema>;
 
 interface BusinessDialogProps {
-  business: Business | null;
+  children?: ReactNode;
+  business?: Business | null;
   onSave: (business: Omit<Business, 'id'> | Business) => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function BusinessDialog({ business, onSave, isOpen, onOpenChange }: BusinessDialogProps) {
+export function BusinessDialog({ children, business, onSave, isOpen, onOpenChange }: BusinessDialogProps) {
   const { members } = useMemberStore();
 
   const form = useForm<BusinessFormValues>({
@@ -87,15 +87,21 @@ export function BusinessDialog({ business, onSave, isOpen, onOpenChange }: Busin
   }, [business, form, isOpen]);
 
   function onSubmit(values: BusinessFormValues) {
-    const owner = members.find(m => m.name === values.ownerName) || initialMembers[0];
+    const owner = members.find(m => m.name === values.ownerName);
     
+    if (!owner) {
+        // Handle case where owner is not found, maybe show an error
+        console.error("Owner not found");
+        return;
+    }
+
     const businessData = {
       name: values.name,
       owner,
       phone: values.phone,
       type: values.type,
       status: values.status,
-      notes: values.notes,
+      notes: values.notes || "",
     };
     
     onSave(business ? { ...business, ...businessData } : businessData);
@@ -104,6 +110,7 @@ export function BusinessDialog({ business, onSave, isOpen, onOpenChange }: Busin
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{business ? "Edit Business" : "Add New Business"}</DialogTitle>
@@ -134,7 +141,7 @@ export function BusinessDialog({ business, onSave, isOpen, onOpenChange }: Busin
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Owner</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                     <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select an owner" />
@@ -227,3 +234,4 @@ export function BusinessDialog({ business, onSave, isOpen, onOpenChange }: Busin
     </Dialog>
   );
 }
+    
