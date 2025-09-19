@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { validationResult, ValidationChain } from 'express-validator';
-import { AppError } from './error-handler';
 
 export const validate = (validations: ValidationChain[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -13,12 +12,11 @@ export const validate = (validations: ValidationChain[]) => {
       return next();
     }
 
-    // Format errors
-    const formattedErrors = errors.array().map(error => ({
-      field: error.param,
-      message: error.msg
-    }));
-
-    next(new AppError(400, 'Validation error', formattedErrors));
+    // Return validation errors directly
+    return res.status(400).json({
+      status: 'error',
+      message: 'Validation failed',
+      errors: errors.array()
+    });
   };
 };

@@ -27,8 +27,8 @@ const projectSchema = new mongoose.Schema<IProject>({
   },
   status: {
     type: String,
-    enum: ['Not Started', 'In Progress', 'On Hold', 'Completed', 'Cancelled'],
-    default: 'Not Started'
+    enum: Object.values(ProjectStatus),
+    default: ProjectStatus.NotStarted
   },
   progress: {
     type: Number,

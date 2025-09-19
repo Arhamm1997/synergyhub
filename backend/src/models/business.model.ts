@@ -2,11 +2,13 @@ import mongoose from 'mongoose';
 
 export interface IBusiness {
   name: string;
+  description: string;
   owner: mongoose.Types.ObjectId;
-  phone: string;
-  type: string;
+  members: mongoose.Types.ObjectId[];
+  phone?: string;
+  type?: string;
   status: 'Active' | 'Inactive' | 'Lead';
-  notes: string;
+  notes?: string;
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -18,19 +20,26 @@ const businessSchema = new mongoose.Schema<IBusiness>({
     required: true,
     trim: true
   },
+  description: {
+    type: String,
+    required: true,
+    trim: true
+  },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
+  members: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   phone: {
     type: String,
-    required: true,
     trim: true
   },
   type: {
-    type: String,
-    required: true
+    type: String
   },
   status: {
     type: String,

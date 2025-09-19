@@ -1,12 +1,4 @@
-import { LanguageServiceClient } from '@google-ai/generativelanguage';
-import { GoogleAuth } from 'google-auth-library';
 import { config } from '../config';
-
-const MODEL_NAME = 'models/text-bison-001';
-
-const client = new LanguageServiceClient({
-  authClient: new GoogleAuth().fromAPIKey(config.googleAiApiKey)
-});
 
 interface NotificationInput {
   id: string;
@@ -24,57 +16,75 @@ export const prioritizeNotifications = async (
   input: { notifications: NotificationInput[] }
 ): Promise<PrioritizedNotification[]> => {
   try {
-    const prompt = `
-      Given these notifications, assign a priority score (0-100) to each based on:
-      - Urgency of the action required
-      - Time sensitivity
-      - Impact on business/project
-      - User role relevance
-      
-      Notifications:
-      ${input.notifications
-        .map(
-          (n) => `ID: ${n.id}
-          Message: ${n.message}
-          Type: ${n.type}
-          Time: ${n.timestamp}`
-        )
-        .join('\n\n')}
-      
-      Return a JSON array with each notification's ID and priority score.
-    `;
-
-    const result = await client.generateText({
-      model: MODEL_NAME,
-      prompt: {
-        text: prompt
-      }
-    });
-
-    const output = result[0]?.candidates?.[0]?.output;
-    if (!output) {
-      throw new Error('No output from AI model');
+    // Check if Google AI API key is available
+    if (!config.googleAiApiKey) {
+      console.log('Google AI API key not configured, using default prioritization');
+      return getDefaultPriorities(input.notifications);
     }
 
-    // Extract JSON from the output
-    const jsonMatch = output.match(/\[.*\]/s);
-    if (!jsonMatch) {
-      throw new Error('Invalid AI response format');
-    }
-
-    const prioritizedNotifications = JSON.parse(jsonMatch[0]);
-
-    // Validate and format the response
-    return prioritizedNotifications.map((pn: any) => ({
-      id: pn.id,
-      priorityScore: Math.min(100, Math.max(0, pn.priorityScore))
-    }));
+    // For now, we'll use a simple rule-based system instead of Google AI
+    // This can be replaced with actual AI service when dependencies are properly set up
+    return getRuleBasedPriorities(input.notifications);
+    
   } catch (error) {
     console.error('Error prioritizing notifications:', error);
     // Return default priorities on error
-    return input.notifications.map(n => ({
-      id: n.id,
-      priorityScore: 50 // Default medium priority
-    }));
+    return getDefaultPriorities(input.notifications);
   }
 };
+
+// Simple rule-based prioritization system
+function getRuleBasedPriorities(notifications: NotificationInput[]): PrioritizedNotification[] {
+  return notifications.map(notification => {
+    let priority = 50; // Default medium priority
+    
+    // High priority types
+    if (notification.type === 'TASK_ASSIGNED' || 
+        notification.type === 'PROJECT_DEADLINE' ||
+        notification.type === 'URGENT_MESSAGE') {
+      priority = 80;
+    }
+    
+    // Medium-high priority
+    else if (notification.type === 'TASK_COMPLETED' || 
+             notification.type === 'PROJECT_UPDATE') {
+      priority = 65;
+    }
+    
+    // Low priority
+    else if (notification.type === 'GENERAL_UPDATE' ||
+             notification.type === 'SYSTEM_NOTIFICATION') {
+      priority = 30;
+    }
+    
+    // Boost priority for recent notifications
+    const notificationTime = new Date(notification.timestamp);
+    const now = new Date();
+    const hoursDiff = (now.getTime() - notificationTime.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursDiff < 1) {
+      priority += 10; // Recent notifications get priority boost
+    }
+    
+    // Check message content for urgent keywords
+    const urgentKeywords = ['urgent', 'asap', 'immediate', 'critical', 'emergency'];
+    const messageWords = notification.message.toLowerCase().split(' ');
+    
+    if (urgentKeywords.some(keyword => messageWords.includes(keyword))) {
+      priority += 15;
+    }
+    
+    return {
+      id: notification.id,
+      priorityScore: Math.min(100, Math.max(0, priority))
+    };
+  });
+}
+
+// Default priorities when AI is not available
+function getDefaultPriorities(notifications: NotificationInput[]): PrioritizedNotification[] {
+  return notifications.map(notification => ({
+    id: notification.id,
+    priorityScore: 50 // Default medium priority
+  }));
+}

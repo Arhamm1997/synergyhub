@@ -5,6 +5,7 @@ export class AppError extends Error {
   constructor(
     public statusCode: number,
     public message: string,
+    public errors?: any,
     public isOperational: boolean = true
   ) {
     super(message);
@@ -15,6 +16,7 @@ export class AppError extends Error {
 interface ErrorResponse {
   status: 'error' | 'fail';
   message: string;
+  errors?: any;
   stack?: string;
 }
 
@@ -30,6 +32,11 @@ export const errorHandler = (
     status: statusCode >= 500 ? 'error' : 'fail',
     message: err.message
   };
+
+  // Add errors if available (for validation errors)
+  if (err instanceof AppError && err.errors) {
+    response.errors = err.errors;
+  }
 
   if (process.env.NODE_ENV === 'development') {
     response.stack = err.stack;

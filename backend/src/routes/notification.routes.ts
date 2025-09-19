@@ -12,10 +12,12 @@ router.use(authenticate);
 // Routes
 router.get('/', notificationController.getNotifications);
 router.put('/:id/read', notificationController.markAsRead);
+router.put('/read-all', notificationController.markAllAsRead);
+router.delete('/:id', notificationController.deleteNotification);
 router.post(
   '/prioritize',
   body('notifications').isArray().withMessage('Notifications must be an array'),
-  validate([]),
+  validate([body('notifications').isArray().withMessage('Notifications must be an array')]),
   notificationController.prioritizeNotifications
 );
 

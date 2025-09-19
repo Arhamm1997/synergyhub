@@ -37,13 +37,13 @@ const taskSchema = new mongoose.Schema<ITask>({
   },
   priority: {
     type: String,
-    enum: ['Urgent', 'High', 'Medium', 'Low', 'None'],
-    default: 'Medium'
+    enum: Object.values(Priority),
+    default: Priority.Medium
   },
   status: {
     type: String,
-    enum: ['Backlog', 'Todo', 'In Progress', 'In Review', 'Done', 'Cancelled'],
-    default: 'Todo'
+    enum: Object.values(TaskStatus),
+    default: TaskStatus.Todo
   },
   dueDate: {
     type: Date,

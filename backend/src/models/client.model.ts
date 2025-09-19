@@ -35,8 +35,8 @@ const clientSchema = new mongoose.Schema<IClient>({
   },
   status: {
     type: String,
-    enum: ['Lead', 'Active', 'On Hold', 'Completed', 'Cancelled'],
-    default: 'Lead'
+    enum: Object.values(ClientStatus),
+    default: ClientStatus.Lead
   },
   progress: {
     type: Number,

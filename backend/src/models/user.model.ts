@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { Department, Role, UserStatus } from '../types/enums';
 
@@ -12,6 +12,7 @@ export interface IUser extends Document {
   avatarHint?: string;
   status: UserStatus;
   details?: string;
+  businesses?: mongoose.Types.ObjectId[];
   lastActive?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -58,6 +59,10 @@ const userSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>({
     default: UserStatus.Offline
   },
   details: String,
+  businesses: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Business'
+  }],
   lastActive: Date
 }, {
   timestamps: true
