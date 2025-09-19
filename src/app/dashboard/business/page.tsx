@@ -109,12 +109,12 @@ export default function BusinessPage() {
           const owner = members.find(m => m.name === row.Owner);
           return ({
           id: `IMPORT-${Date.now()}-${index}`,
-          name: row['Business Name'] || '',
-          owner: owner || { name: row.Owner || '', avatarUrl: '', avatarHint: 'person' },
-          phone: row['Phone Number'] || '',
-          type: row['Business Type'] || '',
+          name: row['Business Name'],
+          owner: owner || { name: row.Owner, avatarUrl: '', avatarHint: 'person' },
+          phone: row['Phone Number'],
+          type: row['Business Type'],
           status: ['Active', 'Inactive', 'Lead'].includes(row.Status) ? row.Status : 'Lead',
-          notes: row.Notes || '',
+          notes: row.Notes,
         })});
 
         setBusinesses(prev => [...prev, ...newBusinesses]);
