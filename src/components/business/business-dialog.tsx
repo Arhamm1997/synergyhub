@@ -49,13 +49,12 @@ type BusinessFormValues = z.infer<typeof formSchema>;
 
 interface BusinessDialogProps {
   children?: ReactNode;
-  business?: Business | null;
-  onSave: (business: Omit<Business, 'id'> | Business) => void;
+  onSave: (business: Omit<Business, 'id'>) => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function BusinessDialog({ children, business, onSave, isOpen, onOpenChange }: BusinessDialogProps) {
+export function BusinessDialog({ children, onSave, isOpen, onOpenChange }: BusinessDialogProps) {
   const { members } = useMemberStore();
 
   const form = useForm<BusinessFormValues>({
@@ -64,27 +63,16 @@ export function BusinessDialog({ children, business, onSave, isOpen, onOpenChang
 
   useEffect(() => {
     if (isOpen) {
-      form.reset(
-        business
-          ? {
-              name: business.name,
-              ownerName: business.owner.name,
-              phone: business.phone,
-              type: business.type,
-              status: business.status,
-              notes: business.notes,
-            }
-          : {
-              name: "",
-              ownerName: "",
-              phone: "",
-              type: "",
-              status: "Lead",
-              notes: "",
-            }
-      );
+      form.reset({
+        name: "",
+        ownerName: "",
+        phone: "",
+        type: "",
+        status: "Lead",
+        notes: "",
+      });
     }
-  }, [business, form, isOpen]);
+  }, [form, isOpen]);
 
   function onSubmit(values: BusinessFormValues) {
     const owner = members.find(m => m.name === values.ownerName);
@@ -104,7 +92,7 @@ export function BusinessDialog({ children, business, onSave, isOpen, onOpenChang
       notes: values.notes || "",
     };
     
-    onSave(business ? { ...business, ...businessData } : businessData);
+    onSave(businessData);
     onOpenChange(false);
   }
 
@@ -113,9 +101,9 @@ export function BusinessDialog({ children, business, onSave, isOpen, onOpenChang
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{business ? "Edit Business" : "Add New Business"}</DialogTitle>
+          <DialogTitle>Add New Business</DialogTitle>
           <DialogDescription>
-            {business ? "Update the details for this business." : "Fill in the details for the new business."}
+            Fill in the details for the new business.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -226,7 +214,7 @@ export function BusinessDialog({ children, business, onSave, isOpen, onOpenChang
             
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">{business ? "Save Changes" : "Create Business"}</Button>
+              <Button type="submit">Create Business</Button>
             </DialogFooter>
           </form>
         </Form>
@@ -234,4 +222,6 @@ export function BusinessDialog({ children, business, onSave, isOpen, onOpenChang
     </Dialog>
   );
 }
+    
+
     

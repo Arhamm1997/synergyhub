@@ -15,7 +15,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { PlusCircle, MoreHorizontal, Trash2, ArrowUpDown, ChevronDown, Upload } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Trash2, ArrowUpDown, ChevronDown, Upload, Save, XCircle } from "lucide-react";
 
 import {
   Card,
@@ -52,6 +52,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -65,7 +72,6 @@ import { BusinessDialog } from "@/components/business/business-dialog";
 export default function BusinessPage() {
   const { toast } = useToast();
   const [data, setData] = useState<Business[]>([]);
-  const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
   const [isBusinessDialogOpen, setIsBusinessDialogOpen] = useState(false);
   
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -75,6 +81,27 @@ export default function BusinessPage() {
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { members } = useMemberStore();
+
+  const [editingRowId, setEditingRowId] = useState<string | null>(null);
+  const [editedData, setEditedData] = useState<Partial<Business>>({});
+
+  const handleEdit = (business: Business) => {
+    setEditingRowId(business.id);
+    setEditedData(business);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRowId(null);
+    setEditedData({});
+  };
+  
+  const handleSaveEdit = () => {
+    if (!editingRowId) return;
+    setData(prev => prev.map(b => b.id === editingRowId ? { ...b, ...editedData } : b));
+    setEditingRowId(null);
+    setEditedData({});
+    toast({ title: "Business Updated" });
+  };
   
   const handleDelete = (businessId: string) => {
     setData(prev => prev.filter(b => b.id !== businessId));
@@ -88,32 +115,22 @@ export default function BusinessPage() {
     toast({ title: `${selectedIds.length} Businesses Deleted` });
   };
 
-  const handleSaveBusiness = (businessData: Omit<Business, 'id'> | Business) => {
-    if ('id' in businessData) {
-      // Editing existing business
-      setData(prev => prev.map(b => b.id === businessData.id ? { ...b, ...businessData } as Business : b));
-      toast({ title: "Business Updated", description: "The business details have been saved."});
-    } else {
-      // Creating new business
+  const handleCreateBusiness = (businessData: Omit<Business, 'id'>) => {
       const businessToAdd: Business = {
         id: `BIZ-${Math.floor(Math.random() * 10000)}`,
         ...businessData
       } as Business;
       setData(prev => [businessToAdd, ...prev]);
       toast({ title: "Business Created", description: "The new business has been added."});
-    }
-    setEditingBusiness(null);
-    setIsBusinessDialogOpen(false);
+      setIsBusinessDialogOpen(false);
   };
 
-  const handleOpenEditDialog = (business: Business) => {
-    setEditingBusiness(business);
-    setIsBusinessDialogOpen(true);
-  }
-  
   const onDialogClose = () => {
-    setEditingBusiness(null);
     setIsBusinessDialogOpen(false);
+  }
+
+  const handleInputChange = (field: keyof Business, value: any) => {
+    setEditedData(prev => ({...prev, [field]: value}));
   }
 
   const columns: ColumnDef<Business>[] = [
@@ -142,7 +159,14 @@ export default function BusinessPage() {
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
+      cell: ({ row }) => {
+          const isEditing = editingRowId === row.original.id;
+          return isEditing ? (
+            <Input value={editedData.name || ''} onChange={e => handleInputChange('name', e.target.value)} className="w-full" />
+          ) : (
+            <div className="font-medium">{row.getValue("name")}</div>
+          );
+      }
     },
     {
       accessorKey: "owner",
@@ -152,9 +176,9 @@ export default function BusinessPage() {
         return (
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
-              <AvatarFallback>{owner.name ? owner.name.charAt(0).toUpperCase() : 'N'}</AvatarFallback>
+              <AvatarFallback>{owner?.name ? owner.name.charAt(0).toUpperCase() : 'N'}</AvatarFallback>
             </Avatar>
-            <span>{owner.name}</span>
+            <span>{owner?.name}</span>
           </div>
         )
       }
@@ -162,10 +186,26 @@ export default function BusinessPage() {
     {
       accessorKey: "phone",
       header: "Phone",
+      cell: ({ row }) => {
+          const isEditing = editingRowId === row.original.id;
+          return isEditing ? (
+            <Input value={editedData.phone || ''} onChange={e => handleInputChange('phone', e.target.value)} className="w-full" />
+          ) : (
+            row.getValue("phone")
+          );
+      }
     },
     {
         accessorKey: "type",
         header: "Business Type",
+         cell: ({ row }) => {
+          const isEditing = editingRowId === row.original.id;
+          return isEditing ? (
+            <Input value={editedData.type || ''} onChange={e => handleInputChange('type', e.target.value)} className="w-full" />
+          ) : (
+            row.getValue("type")
+          );
+      }
     },
     {
       accessorKey: "status",
@@ -176,24 +216,56 @@ export default function BusinessPage() {
         </Button>
       ),
       cell: ({ row }) => {
+        const isEditing = editingRowId === row.original.id;
         const status = row.getValue("status") as Business["status"];
         const variants = {
           "Active": "default",
           "Inactive": "outline",
           "Lead": "secondary",
         } as const;
-        return <Badge variant={variants[status]}>{status}</Badge>;
+        return isEditing ? (
+            <Select onValueChange={value => handleInputChange('status', value)} defaultValue={editedData.status}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                    <SelectItem value="Lead">Lead</SelectItem>
+                </SelectContent>
+            </Select>
+        ) : (
+            <Badge variant={variants[status]}>{status}</Badge>
+        );
       }
     },
     {
         accessorKey: "notes",
         header: "Notes",
-        cell: ({ row }) => <div className="truncate max-w-xs">{row.getValue("notes")}</div>
+        cell: ({ row }) => {
+             const isEditing = editingRowId === row.original.id;
+             return isEditing ? (
+                <Input value={editedData.notes || ''} onChange={e => handleInputChange('notes', e.target.value)} className="w-full" />
+             ) : (
+                <div className="truncate max-w-xs">{row.getValue("notes")}</div>
+             )
+        }
     },
     {
       id: "actions",
       cell: ({ row }) => {
         const business = row.original;
+        const isEditing = editingRowId === business.id;
+        
+        if (isEditing) {
+            return (
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="icon" onClick={handleSaveEdit}><Save className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={handleCancelEdit}><XCircle className="h-4 w-4" /></Button>
+                </div>
+            )
+        }
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -204,7 +276,7 @@ export default function BusinessPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => handleOpenEditDialog(business)}>Edit Business</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleEdit(business)}>Edit Business</DropdownMenuItem>
               <DropdownMenuSeparator />
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -255,7 +327,7 @@ export default function BusinessPage() {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -265,72 +337,61 @@ export default function BusinessPage() {
       description: "Reading data from the Excel file.",
     });
 
-    try {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-                const data = e.target?.result;
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const data = e.target?.result;
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
 
-                const newBusinesses: Business[] = jsonData.map((row, index) => {
-                    const ownerName = row["Assigned To"] || "Not Assigned";
-                    const owner = members.find(m => m.name.toLowerCase() === ownerName.toLowerCase()) || 
-                                  members.find(m => m.name === "Not Assigned") || 
-                                  { name: ownerName, avatarUrl: '', avatarHint: 'person' };
-                    
-                    return {
-                        id: `IMPORT-${Date.now()}-${index}`,
-                        name: row["Business Name"] || '',
-                        owner: owner,
-                        phone: row["Phone Number"] || '',
-                        type: row["Business Type"] || 'Service',
-                        status: row["Status"] || 'Lead',
-                        notes: row["Notes"] || '',
-                    };
-                });
-                
-                setData(prev => [...prev, ...newBusinesses]);
-                toast({
-                    title: "Import Successful",
-                    description: `${newBusinesses.length} businesses have been added.`,
-                });
-            } catch(error) {
-                 console.error("Failed to process Excel file", error);
-                 toast({
-                    variant: "destructive",
-                    title: "Import Failed",
-                    description: "Could not process the selected file. Please ensure it has the correct columns (Business Name, Assigned To, Phone Number, Business Type, Status, Notes).",
-                 });
-            } finally {
-                 setIsLoading(false);
-                 if (event.target) event.target.value = '';
-            }
-        };
+        const newBusinesses: Business[] = jsonData.map((row, index) => {
+            const ownerName = row["Assigned To"] || "Not Assigned";
+            const owner = members.find(m => m.name.toLowerCase() === ownerName.toLowerCase()) || 
+                          members.find(m => m.name === "Not Assigned") || 
+                          { name: ownerName, avatarUrl: '', avatarHint: 'person' };
+            
+            return {
+                id: `IMPORT-${Date.now()}-${index}`,
+                name: row["Business Name"] || '',
+                owner: owner,
+                phone: row["Phone Number"] || '',
+                type: row["Business Type"] || '',
+                status: row["Status"] || 'Lead',
+                notes: row["Notes"] || '',
+            };
+        });
+        
+        setData(prev => [...prev, ...newBusinesses]);
+        toast({
+            title: "Import Successful",
+            description: `${newBusinesses.length} businesses have been added.`,
+        });
+      } catch(error) {
+         console.error("Failed to process Excel file", error);
+         toast({
+            variant: "destructive",
+            title: "Import Failed",
+            description: "Could not process the selected file. Please ensure it has the correct columns (Business Name, Assigned To, Phone Number, Business Type, Status, Notes).",
+         });
+      } finally {
+         setIsLoading(false);
+         if (event.target) event.target.value = '';
+      }
+    };
 
-        reader.onerror = (error) => {
-            console.error("Failed to read file", error);
-            toast({
-                variant: "destructive",
-                title: "Import Failed",
-                description: "Could not read the selected file.",
-            });
-            setIsLoading(false);
-        };
+    reader.onerror = (error) => {
+        console.error("Failed to read file", error);
+        toast({
+            variant: "destructive",
+            title: "Import Failed",
+            description: "Could not read the selected file.",
+        });
+        setIsLoading(false);
+    };
 
-        reader.readAsArrayBuffer(file);
-      
-    } catch (error) {
-      console.error("Failed to import Excel file", error);
-      toast({
-        variant: "destructive",
-        title: "Import Failed",
-        description: "Could not process the selected file. Please ensure it is a valid Excel file.",
-      });
-      setIsLoading(false);
-    }
+    reader.readAsArrayBuffer(file);
   };
 
   return (
@@ -355,8 +416,8 @@ export default function BusinessPage() {
                     <Upload className="mr-2 h-4 w-4" />
                     {isLoading ? "Importing..." : "Import from Excel"}
                 </Button>
-                <BusinessDialog onSave={handleSaveBusiness} isOpen={isBusinessDialogOpen && !editingBusiness} onOpenChange={setIsBusinessDialogOpen}>
-                    <Button>
+                <BusinessDialog onSave={handleCreateBusiness} isOpen={isBusinessDialogOpen} onOpenChange={onDialogClose}>
+                    <Button onClick={() => setIsBusinessDialogOpen(true)}>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Business
                     </Button>
@@ -498,15 +559,9 @@ export default function BusinessPage() {
             </div>
           </div>
       </CardContent>
-       {editingBusiness && (
-        <BusinessDialog
-            business={editingBusiness}
-            onSave={(editedBusiness) => handleSaveBusiness({ ...editingBusiness, ...(editedBusiness as Omit<Business, 'id'>) })}
-            isOpen={isBusinessDialogOpen && !!editingBusiness}
-            onOpenChange={onDialogClose}
-        />
-      )}
     </Card>
   );
 }
+    
+
     
