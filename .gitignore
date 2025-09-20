@@ -1,7 +1,9 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
+node_modules/
 /node_modules
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -9,37 +11,101 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # testing
 /coverage
+**/coverage
+.nyc_output
+*.lcov
 
-# next.js
+# build outputs
+/build
+**/build
+/dist
+**/dist
 /.next/
 /out/
+**/.next
+**/out
+.output
+.nuxt
 
-# production
-/build
+# cache directories
+.cache
+**/.cache
+.temp
+**/.temp
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
 
-# misc
-.DS_Store
-*.pem
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+*.bak
+*.sublime-*
 
-# debug
+# logs and debugging
+logs/
+**/logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+debug.log
+*-debug.log
+*-error.log
 
-# vercel
-.vercel
+# environment and local files
+.env
+.env.*
+!.env.example
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+*.local
 
-# typescript
+# system files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Next.js specific
+.next/
+out/
+.vercel/
+
+# TypeScript specific
 *.tsbuildinfo
 next-env.d.ts
 
+# Project specific
 .genkit/*
-.env*
+backend/dist/
+frontend/dist/
+frontend/.next/
+**/public/temp/
+**/tmp/
+**/.serverless/
 
-# firebase
+# Firebase
 firebase-debug.log
 firestore-debug.log
+.firebase/
