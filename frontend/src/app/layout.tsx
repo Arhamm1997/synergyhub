@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from '@/components/theme-provider';
+import { ConnectionStatus } from '@/components/connection-status';
 
 export const metadata: Metadata = {
   title: 'SynergyHub',
@@ -29,6 +30,7 @@ export default function RootLayout({
         >
           {children}
           <Toaster />
+          <ConnectionStatus />
         </ThemeProvider>
       </body>
     </html>

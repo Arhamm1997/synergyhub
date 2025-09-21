@@ -17,7 +17,9 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: config.corsOrigin,
-    credentials: true
+    credentials: true,
+    methods: ["GET", "POST"],
+    allowedHeaders: ["content-type"]
   }
 });
 

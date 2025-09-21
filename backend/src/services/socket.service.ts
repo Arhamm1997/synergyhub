@@ -9,12 +9,28 @@ interface SocketUser extends Socket {
 }
 
 export const setupSocketHandlers = (io: Server) => {
-  // Authentication middleware
-  io.use(async (socket: SocketUser, next) => {
+  // Public namespace - no auth required
+  const publicIo = io.of('/public');
+  
+  publicIo.on('connection', (socket: Socket) => {
+    logger.info('Client connected to public namespace');
+    
+    socket.emit('connection_ack', { status: 'connected' });
+
+    socket.on('disconnect', () => {
+      logger.info('Client disconnected from public namespace');
+    });
+  });
+
+  // Authenticated namespace
+  const authIo = io.of('/auth');
+
+  // Authentication middleware for authenticated namespace
+  authIo.use(async (socket: SocketUser, next) => {
     try {
       const token = socket.handshake.auth.token;
       if (!token) {
-        throw new Error('Authentication error');
+        throw new Error('Authentication required');
       }
 
       const decoded = JwtService.verifyToken(token);
@@ -25,7 +41,7 @@ export const setupSocketHandlers = (io: Server) => {
     }
   });
 
-  io.on('connection', async (socket: SocketUser) => {
+  authIo.on('connection', async (socket: SocketUser) => {
     try {
       const userId = socket.userId;
       if (!userId) return;
