@@ -7,6 +7,9 @@ import businessRoutes from './business.routes';
 import messageRoutes from './message.routes';
 import notificationRoutes from './notification.routes';
 import uploadRoutes from './upload.routes';
+import invitationRoutes from './invitation.routes';
+import quotasRoutes from './quotas.routes';
+import healthRoutes from './health.routes';
 
 export const setupRoutes = (app: Express) => {
   // API Routes
@@ -18,9 +21,9 @@ export const setupRoutes = (app: Express) => {
   app.use('/api/messages', messageRoutes);
   app.use('/api/notifications', notificationRoutes);
   app.use('/api/upload', uploadRoutes);
+  app.use('/api/invitations', invitationRoutes);
+  app.use('/api/quotas', quotasRoutes);
 
   // Health check
-  app.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
-  });
+  app.use('/health', healthRoutes);
 };

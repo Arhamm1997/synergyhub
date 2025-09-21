@@ -5,6 +5,8 @@ export interface IMessage {
   receiver: mongoose.Types.ObjectId;
   content: string;
   read: boolean;
+  readAt?: Date;
+  edited?: boolean;
   attachments?: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -26,6 +28,14 @@ const messageSchema = new mongoose.Schema<IMessage>({
     required: true
   },
   read: {
+    type: Boolean,
+    default: false
+  },
+  readAt: {
+    type: Date,
+    default: null
+  },
+  edited: {
     type: Boolean,
     default: false
   },

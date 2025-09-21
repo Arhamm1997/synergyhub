@@ -2,8 +2,14 @@ import { Request, Response } from 'express';
 import { Business } from '../models/business.model';
 import { User } from '../models/user.model';
 import { logger } from '../utils/logger';
+import mongoose from 'mongoose';
 
 export class BusinessController {
+  // Helper method to validate ObjectId
+  private isValidObjectId(id: string): boolean {
+    return mongoose.Types.ObjectId.isValid(id);
+  }
+
   async createBusiness(req: Request, res: Response) {
     try {
       const { name, description } = req.body;
@@ -42,7 +48,14 @@ export class BusinessController {
 
   async getBusinessById(req: Request, res: Response) {
     try {
-      const business = await Business.findById(req.params.id)
+      const { businessId } = req.params;
+
+      // Validate ObjectId
+      if (!this.isValidObjectId(businessId)) {
+        return res.status(400).json({ message: 'Invalid business ID format' });
+      }
+
+      const business = await Business.findById(businessId)
         .populate('owner', 'name email')
         .populate('members', 'name email');
 
@@ -50,10 +63,106 @@ export class BusinessController {
         return res.status(404).json({ message: 'Business not found' });
       }
 
+      // Check if user is member of this business
+      const userId = req.user?._id;
+      const isMember = business.members.some((member: any) => 
+        member._id.toString() === userId?.toString()
+      );
+
+      if (!isMember) {
+        return res.status(403).json({ message: 'Not authorized to view this business' });
+      }
+
       res.json(business);
     } catch (error) {
       logger.error('Error getting business:', error);
       res.status(500).json({ message: 'Error getting business' });
+    }
+  }
+
+  async getMemberQuotas(req: Request, res: Response) {
+    try {
+      const { businessId } = req.params;
+      logger.info(`Getting member quotas for business: ${businessId}`);
+
+      if (!req.user?._id) {
+        logger.error('No user found in request');
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      // Validate ObjectId
+      if (!this.isValidObjectId(businessId)) {
+        logger.warn(`Invalid business ID format: ${businessId}`);
+        return res.status(400).json({ message: 'Invalid business ID format' });
+      }
+
+      const business = await Business.findById(businessId)
+        .populate('members', 'name email')
+        .populate('owner', '_id');
+
+      if (!business) {
+        logger.warn(`Business not found: ${businessId}`);
+        return res.status(404).json({ message: 'Business not found' });
+      }
+
+      // Check if user is member of this business
+      const userId = req.user._id;
+      const isMember = business.members.some((member: any) => 
+        member._id.toString() === userId?.toString()
+      );
+
+      if (!isMember) {
+        logger.warn(`User ${userId} not authorized to view business ${businessId}`);
+        return res.status(403).json({ message: 'Not authorized to view this business' });
+      }
+
+      // Generate member quotas with role-based limits
+      const memberQuotas = business.members.map((member: any) => {
+        const isOwner = member._id.toString() === business.owner.toString();
+        const role = isOwner ? 'owner' : 'member';
+
+        return {
+          memberId: member._id,
+          memberName: member.name,
+          memberEmail: member.email,
+          role,
+          quotas: {
+            tasks: {
+              limit: isOwner ? -1 : 100, // -1 means unlimited
+              used: 0
+            },
+            projects: {
+              limit: isOwner ? -1 : 10,
+              used: 0
+            },
+            storage: {
+              limit: isOwner ? -1 : 5120, // 5GB in MB
+              used: 0
+            }
+          }
+        };
+      });
+
+      const response = {
+        businessId: business._id,
+        businessName: business.name,
+        memberQuotas,
+        quotaLimits: {
+          maxMembers: 1000,
+          maxAdmins: 20,
+          currentMembers: business.members.length,
+          currentAdmins: business.members.filter((m: any) => m.role === 'admin').length
+        }
+      };
+
+      logger.info(`Successfully retrieved quotas for business ${businessId}`);
+      res.json(response);
+    } catch (error) {
+      logger.error('Error getting member quotas:', error);
+      res.status(500).json({ 
+        message: 'Error getting member quotas',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   }
 

@@ -26,9 +26,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/logo";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api-config";
+import { InvitationValidation } from "@/components/auth/invitation-validation";
 
 const formSchema = z
   .object({
+    name: z.string().min(1, "Full name is required"),
     email: z.string().email({
       message: "Please enter a valid email address.",
     }),
@@ -36,6 +39,7 @@ const formSchema = z
       message: "Password must be at least 8 characters.",
     }),
     confirmPassword: z.string(),
+    businessId: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match.",
@@ -49,19 +53,43 @@ export default function SignupPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
       confirmPassword: "",
+      businessId: "",
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Mock signup logic
-    toast({
-      title: "Account Created",
-      description: "You have been successfully signed up! Redirecting to dashboard.",
-    });
-    router.push("/dashboard");
+  const handleValidInvitation = (businessId: string, email: string) => {
+    form.setValue("businessId", businessId);
+    form.setValue("email", email);
+  };
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      await api.post('/auth/signup', {
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        businessId: values.businessId || undefined
+      });
+
+      toast({
+        title: "Account Created",
+        description: values.businessId
+          ? "Your account has been created! Welcome to the team."
+          : "Your account has been created! Please log in to continue.",
+      });
+
+      router.push('/');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error?.response?.data?.message || "Failed to create account",
+        variant: "destructive",
+      });
+    }
   }
 
   return (
@@ -78,10 +106,13 @@ export default function SignupPage() {
             </div>
           </div>
           <Card>
+            <InvitationValidation onValidInvitation={handleValidInvitation} />
             <CardHeader>
               <CardTitle className="text-2xl">Sign Up</CardTitle>
               <CardDescription>
-                Fill in the details below to create your account.
+                {form.getValues("businessId")
+                  ? "Complete your account setup to join the team"
+                  : "Fill in the details below to create your account"}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -89,12 +120,29 @@ export default function SignupPage() {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <FormField
                     control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input placeholder="m@example.com" {...field} />
+                          <Input 
+                            placeholder="m@example.com" 
+                            {...field} 
+                            disabled={form.getValues("businessId") !== ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

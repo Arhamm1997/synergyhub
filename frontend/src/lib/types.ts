@@ -4,6 +4,20 @@ import type { LucideIcon } from "lucide-react";
 import type { Table } from "@tanstack/react-table";
 import type { Event } from 'react-big-calendar';
 
+export enum Role {
+  SuperAdmin = "SuperAdmin",
+  Admin = "Admin",
+  Member = "Member",
+  Client = "Client"
+}
+
+export interface BusinessQuotas {
+  maxAdmins: number;
+  maxMembers: number;
+  currentAdmins: number;
+  currentMembers: number;
+}
+
 export type Priority = "Urgent" | "High" | "Medium" | "Low" | "None";
 export type TaskStatus = "Backlog" | "Todo" | "In Progress" | "In Review" | "Done" | "Cancelled";
 export type ProjectStatus = "Not Started" | "In Progress" | "On Hold" | "Completed" | "Cancelled";
@@ -67,12 +81,15 @@ export interface Client {
 export interface Member {
     id: string;
     name: string;
-    role: string;
+    role: Role;
     department: Department;
     email: string;
     avatarUrl: string;
     avatarHint: string;
     details?: string;
+    permissions?: string[];
+    status: UserStatus;
+    lastActive?: Date;
 }
 
 export interface Business {
@@ -83,6 +100,8 @@ export interface Business {
   type: string;
   status: 'Active' | 'Inactive' | 'Lead';
   notes: string;
+  quotas: BusinessQuotas;
+  members: Member[];
 }
 
 

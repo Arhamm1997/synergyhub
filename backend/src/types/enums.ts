@@ -37,11 +37,34 @@ export enum UserStatus {
   Away = 'Away'
 }
 
-export type Department = string;
+export enum Department {
+  Engineering = 'Engineering',
+  Design = 'Design',
+  Marketing = 'Marketing',
+  Sales = 'Sales',
+  Management = 'Management',
+  Operations = 'Operations',
+  HR = 'HR',
+  Finance = 'Finance',
+  Other = 'Other'
+}
 
 export enum Role {
+  SuperAdmin = 'SuperAdmin',
   Admin = 'Admin',
-  TeamLead = 'Team Lead',
-  Employee = 'Employee',
+  Member = 'Member',
   Client = 'Client'
+}
+
+export enum Permission {
+  ManageAdmins = 'manage_admins',
+  ManageMembers = 'manage_members',
+  ManageClients = 'manage_clients',
+  ManageProjects = 'manage_projects',
+  ManageTasks = 'manage_tasks',
+  EditTasks = 'edit_tasks',
+  ViewTasks = 'view_tasks',
+  ManageMessages = 'manage_messages',
+  SendMessages = 'send_messages',
+  UploadFiles = 'upload_files'
 }

@@ -1,54 +1,42 @@
-import Joi from 'joi';
+import { z } from 'zod';
 import { Priority, TaskStatus } from '../types/enums';
 
-const priorityValues = [
-  Priority.Urgent,
-  Priority.High,
-  Priority.Medium,
-  Priority.Low,
-  Priority.None
-];
+const createTaskSchema = z.object({
+  title: z.string().trim().min(1, 'Task title is required'),
+  project: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Valid project ID is required'),
+  assignee: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Valid assignee ID is required'),
+  priority: z.nativeEnum(Priority),
+  status: z.nativeEnum(TaskStatus),
+  dueDate: z.string().datetime('Valid due date is required'),
+  description: z.string().trim().max(1000, 'Description cannot exceed 1000 characters').optional(),
+  attachments: z.array(z.string()).optional()
+});
 
-const statusValues = [
-  TaskStatus.Backlog,
-  TaskStatus.Todo,
-  TaskStatus.InProgress,
-  TaskStatus.InReview,
-  TaskStatus.Done,
-  TaskStatus.Cancelled
-];
+const updateTaskSchema = z.object({
+  title: z.string().trim().min(1, 'Task title is required').optional(),
+  project: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Valid project ID is required').optional(),
+  assignee: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Valid assignee ID is required').optional(),
+  priority: z.nativeEnum(Priority).optional(),
+  status: z.nativeEnum(TaskStatus).optional(),
+  dueDate: z.string().datetime('Valid due date is required').optional(),
+  description: z.string().trim().max(1000, 'Description cannot exceed 1000 characters').optional(),
+  attachments: z.array(z.string()).optional()
+});
+
+const queryTasksSchema = z.object({
+  assignee: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid assignee ID').optional()
+});
 
 export const taskValidation = {
-  createTask: Joi.object({
-    title: Joi.string().required().min(3).max(100),
-    description: Joi.string().max(1000),
-    projectId: Joi.string().required(),
-    assigneeId: Joi.string().required(),
-    priority: Joi.string().valid(...priorityValues),
-    status: Joi.string().valid(...statusValues),
-    dueDate: Joi.date().required(),
-    attachments: Joi.array().items(Joi.string())
-  }),
-
-  updateTask: Joi.object({
-    title: Joi.string().min(3).max(100),
-    description: Joi.string().max(1000),
-    assigneeId: Joi.string(),
-    priority: Joi.string().valid(...priorityValues),
-    status: Joi.string().valid(...statusValues),
-    dueDate: Joi.date(),
-    attachments: Joi.array().items(Joi.string())
-  }),
-
-  changeStatus: Joi.object({
-    status: Joi.string().valid(...statusValues).required()
-  }),
-
-  changePriority: Joi.object({
-    priority: Joi.string().valid(...priorityValues).required()
-  }),
-
-  changeAssignee: Joi.object({
-    assigneeId: Joi.string().required()
-  })
+  createTask: {
+    body: createTaskSchema
+  },
+  
+  updateTask: {
+    body: updateTaskSchema
+  },
+  
+  queryTasks: {
+    query: queryTasksSchema
+  }
 };

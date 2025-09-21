@@ -51,6 +51,7 @@ import type { Project, ProjectStatus } from "@/lib/types";
 import { ProjectDialog } from "@/components/projects/project-dialog";
 import { initialProjects } from "@/lib/project-data";
 import { useToast } from "@/hooks/use-toast";
+import { useMemberStore } from "@/store/member-store";
 
 
 export default function ProjectsPage() {
@@ -58,6 +59,19 @@ export default function ProjectsPage() {
   const [projects, setProjects] = React.useState<Project[]>(initialProjects);
   const [editingProject, setEditingProject] = React.useState<Project | null>(null);
   const [isProjectDialogOpen, setIsProjectDialogOpen] = React.useState(false);
+  const { members, fetchMembers } = useMemberStore();
+
+  React.useEffect(() => {
+    // TODO: Get the business ID from the user context or route
+    const businessId = "current-business-id";
+    fetchMembers(businessId).catch(error => {
+      toast({
+        title: "Error",
+        description: "Failed to fetch team members",
+        variant: "destructive"
+      });
+    });
+  }, [fetchMembers, toast]);
   
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -238,17 +252,23 @@ export default function ProjectsPage() {
     },
   });
 
-  const handleCreateProject = (newProject: Omit<Project, 'id' | 'progress' | 'tasks'>) => {
+    const handleCreateProject = (newProject: Omit<Project, 'id' | 'progress' | 'tasks'>) => {
     const projectToAdd: Project = {
       id: `PROJ-${Math.floor(Math.random() * 1000)}`,
       progress: 0,
       tasks: [],
-      ...newProject
+      ...newProject,
+      team: newProject.team.map(teamMember => {
+        const fullMember = members.find(m => m.name === teamMember.name);
+        return {
+          name: teamMember.name,
+          avatarUrl: teamMember.avatarUrl || fullMember?.avatarUrl || '',
+          avatarHint: teamMember.avatarHint || fullMember?.avatarHint || '',
+        };
+      })
     }
     setProjects(prev => [projectToAdd, ...prev]);
-  };
-
-  const handleUpdateProject = (updatedProject: Project) => {
+  };  const handleUpdateProject = (updatedProject: Project) => {
     setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
     setEditingProject(null);
   }

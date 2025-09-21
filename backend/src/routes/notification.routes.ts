@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { body } from 'express-validator';
 import { notificationController } from '../controllers/notification.controller';
 import { authenticate } from '../middleware/auth.middleware';
-import { validate } from '../middleware/validation.middleware';
+import { validateRequest } from '../middleware/validate-request';
+import { notificationValidation } from '../validations/notification.validation';
 
 const router = Router();
 
@@ -16,8 +16,7 @@ router.put('/read-all', notificationController.markAllAsRead);
 router.delete('/:id', notificationController.deleteNotification);
 router.post(
   '/prioritize',
-  body('notifications').isArray().withMessage('Notifications must be an array'),
-  validate([body('notifications').isArray().withMessage('Notifications must be an array')]),
+  validateRequest(notificationValidation.prioritizeNotifications),
   notificationController.prioritizeNotifications
 );
 

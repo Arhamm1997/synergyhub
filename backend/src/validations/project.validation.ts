@@ -1,24 +1,32 @@
-import Joi from 'joi';
+import { z } from 'zod';
+import { ProjectStatus } from '../types/enums';
+
+const createProjectSchema = z.object({
+  name: z.string().trim().min(1, 'Project name is required'),
+  client: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Valid client ID is required'),
+  status: z.nativeEnum(ProjectStatus),
+  progress: z.number().int().min(0).max(100).default(0),
+  deadline: z.string().datetime('Valid deadline date is required'),
+  team: z.array(z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid team member ID')),
+  description: z.string().trim().max(1000, 'Description cannot exceed 1000 characters').optional()
+});
+
+const updateProjectSchema = z.object({
+  name: z.string().trim().min(1, 'Project name is required').optional(),
+  client: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Valid client ID is required').optional(),
+  status: z.nativeEnum(ProjectStatus).optional(),
+  progress: z.number().int().min(0).max(100).optional(),
+  deadline: z.string().datetime('Valid deadline date is required').optional(),
+  team: z.array(z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid team member ID')).optional(),
+  description: z.string().trim().max(1000, 'Description cannot exceed 1000 characters').optional()
+});
 
 export const projectValidation = {
-  createProject: Joi.object({
-    name: Joi.string().required().min(2).max(100),
-    description: Joi.string().required().min(10).max(1000),
-    businessId: Joi.string().required(),
-    startDate: Joi.date().required(),
-    endDate: Joi.date().required().min(Joi.ref('startDate')),
-    status: Joi.string().valid('Not Started', 'In Progress', 'On Hold', 'Completed')
-  }),
-
-  updateProject: Joi.object({
-    name: Joi.string().min(2).max(100),
-    description: Joi.string().min(10).max(1000),
-    startDate: Joi.date(),
-    endDate: Joi.date().min(Joi.ref('startDate')),
-    status: Joi.string().valid('Not Started', 'In Progress', 'On Hold', 'Completed')
-  }),
-
-  addMember: Joi.object({
-    memberId: Joi.string().required()
-  })
+  createProject: {
+    body: createProjectSchema
+  },
+  
+  updateProject: {
+    body: updateProjectSchema
+  }
 };

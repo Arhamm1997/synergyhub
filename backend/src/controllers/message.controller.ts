@@ -4,6 +4,127 @@ import { User } from '../models/user.model';
 import { AppError } from '../middleware/error-handler';
 
 export const messageController = {
+  // Mark message as read
+  async markAsRead(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { messageId } = req.params;
+      const userId = req.user._id;
+
+      const message = await Message.findById(messageId);
+      if (!message) {
+        throw new AppError(404, 'Message not found');
+      }
+
+      // Check if user is the receiver
+      if (message.receiver.toString() !== userId.toString()) {
+        throw new AppError(403, 'Not authorized to mark this message as read');
+      }
+
+      message.read = true;
+      message.readAt = new Date();
+      await message.save();
+
+      res.json({
+        success: true,
+        data: message
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Update message
+  async updateMessage(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { messageId } = req.params;
+      const { content, attachments } = req.body;
+      const userId = req.user._id;
+
+      const message = await Message.findById(messageId);
+      if (!message) {
+        throw new AppError(404, 'Message not found');
+      }
+
+      // Check if user is the sender
+      if (message.sender.toString() !== userId.toString()) {
+        throw new AppError(403, 'Not authorized to update this message');
+      }
+
+      // Only allow updating within 24 hours
+      const timeLimit = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+      if (Date.now() - message.createdAt.getTime() > timeLimit) {
+        throw new AppError(400, 'Cannot edit messages older than 24 hours');
+      }
+
+      message.content = content;
+      if (attachments) {
+        message.attachments = attachments;
+      }
+      message.edited = true;
+      await message.save();
+
+      await message.populate([
+        { path: 'sender', select: 'name avatarUrl' },
+        { path: 'receiver', select: 'name avatarUrl' }
+      ]);
+
+      res.json({
+        success: true,
+        data: message
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Delete message
+  async deleteMessage(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { messageId } = req.params;
+      const userId = req.user._id;
+
+      const message = await Message.findById(messageId);
+      if (!message) {
+        throw new AppError(404, 'Message not found');
+      }
+
+      // Check if user is the sender
+      if (message.sender.toString() !== userId.toString()) {
+        throw new AppError(403, 'Not authorized to delete this message');
+      }
+
+      await message.deleteOne();
+
+      res.json({
+        success: true,
+        message: 'Message deleted successfully'
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Get unread message count
+  async getUnreadCount(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user._id;
+      const { businessId } = req.query;
+
+      const query: any = { receiver: userId, read: false };
+      if (businessId) {
+        query.business = businessId;
+      }
+
+      const unreadCount = await Message.countDocuments(query);
+
+      res.json({
+        success: true,
+        data: { unreadCount }
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
   // Get all messages for current user
   async getMessages(req: Request, res: Response, next: NextFunction) {
     try {

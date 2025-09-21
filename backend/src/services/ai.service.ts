@@ -16,9 +16,9 @@ export const prioritizeNotifications = async (
   input: { notifications: NotificationInput[] }
 ): Promise<PrioritizedNotification[]> => {
   try {
-    // Check if Google AI API key is available
-    if (!config.googleAiApiKey) {
-      console.log('Google AI API key not configured, using default prioritization');
+    // Check if Gemini AI API key is available
+    if (!config.geminiApiKey) {
+      console.log('Gemini AI API key not configured, using default prioritization');
       return getDefaultPriorities(input.notifications);
     }
 

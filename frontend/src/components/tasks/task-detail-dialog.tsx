@@ -38,8 +38,9 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import type { Task, Priority, TaskStatus } from "@/lib/types";
-import placeholderImages from "@/lib/placeholder-images.json";
 import { useToast } from "@/hooks/use-toast";
+import { AssigneeSelector } from "./assignee-selector";
+import { useMemberStore } from "@/store/member-store";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 
 const formSchema = z.object({
@@ -77,14 +78,19 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask, onDel
         },
   });
 
+  const { members } = useMemberStore();
+
   const onSubmit = (values: TaskFormValues) => {
+    const assignee = members.find(m => m.name === values.assigneeName);
+    if (!assignee) return;
+
     const updatedTask: Task = {
       ...task,
       ...values,
       assignee: {
-        name: values.assigneeName,
-        avatarUrl: task.assignee.avatarUrl,
-        avatarHint: task.assignee.avatarHint,
+        name: assignee.name,
+        avatarUrl: assignee.avatarUrl,
+        avatarHint: assignee.avatarHint,
       },
       dueDate: format(values.dueDate, "yyyy-MM-dd"),
       priority: values.priority as Priority,
@@ -196,7 +202,7 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask, onDel
                     <FormItem className="flex items-center">
                         <FormLabel className="w-24 flex items-center gap-2 text-muted-foreground"><User className="h-4 w-4" /> Assignee</FormLabel>
                         <FormControl>
-                           <Input placeholder="Select assignee" {...field} />
+                          <AssigneeSelector value={field.value} onChange={field.onChange} />
                         </FormControl>
                     </FormItem>
                     )}

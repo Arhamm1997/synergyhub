@@ -3,6 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from '@/components/theme-provider';
 import { ConnectionStatus } from '@/components/connection-status';
+import { LoadingProvider } from '@/providers/loading-provider';
+import { RouteChangeLoader } from '@/components/route-change-loader';
 
 export const metadata: Metadata = {
   title: 'SynergyHub',
@@ -28,9 +30,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster />
-          <ConnectionStatus />
+          <LoadingProvider>
+            <RouteChangeLoader />
+            {children}
+            <Toaster />
+            <ConnectionStatus />
+          </LoadingProvider>
         </ThemeProvider>
       </body>
     </html>

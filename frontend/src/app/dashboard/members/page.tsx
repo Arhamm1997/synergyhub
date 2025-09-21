@@ -11,6 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { InviteMemberDialog } from "@/components/members/invite-member-dialog";
+import { PendingInvitations } from "@/components/members/pending-invitations";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +32,7 @@ const departmentVariant: { [key: string]: "default" | "secondary" | "destructive
 };
 
 export default function MembersPage() {
-  const { members, addMember, updateMember } = useMemberStore();
+  const { members, businessId, addMember, updateMember, fetchMembers } = useMemberStore();
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
   const { openChat, setContact } = useChatStore();
@@ -66,17 +68,28 @@ export default function MembersPage() {
             <h1 className="text-2xl font-bold">Team Members</h1>
             <p className="text-muted-foreground">Manage your team and their roles.</p>
          </div>
-         <MemberDialog 
-            onSave={handleCreateMember} 
-            isOpen={isMemberDialogOpen && !editingMember} 
-            onOpenChange={setIsMemberDialogOpen}
-        >
-            <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Member
-            </Button>
-         </MemberDialog>
-      </div>
+         <div className="flex items-center gap-2">
+           <InviteMemberDialog 
+             businessId={businessId || ''} 
+             onInviteSent={fetchMembers} 
+           />
+           <MemberDialog 
+             onSave={handleCreateMember} 
+             isOpen={isMemberDialogOpen && !editingMember} 
+             onOpenChange={setIsMemberDialogOpen}
+           >
+             <Button>
+               <PlusCircle className="mr-2 h-4 w-4" />
+               Add Member
+             </Button>
+           </MemberDialog>
+         </div>
+       </div>
+
+       {businessId && <PendingInvitations 
+         businessId={businessId}
+         onInvitationUpdate={fetchMembers}
+       />}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {members.map((member) => (

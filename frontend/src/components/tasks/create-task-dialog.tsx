@@ -30,7 +30,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import type { Task, Priority, TaskStatus } from "@/lib/types";
-import placeholderImages from "@/lib/placeholder-images.json";
+import { AssigneeSelector } from "./assignee-selector";
+import { useMemberStore } from "@/store/member-store";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -60,16 +61,20 @@ export function CreateTaskDialog({ onCreate, children }: CreateTaskDialogProps) 
     },
   });
 
+  const { members } = useMemberStore();
+
   function onSubmit(values: CreateTaskFormValues) {
+    const assignee = members.find(m => m.name === values.assigneeName);
+    if (!assignee) return;
+
     const newTask: Task = {
       id: `TASK-${Math.floor(Math.random() * 10000)}`,
       title: values.title,
       description: values.description,
       assignee: {
-        name: values.assigneeName,
-        // Using a random avatar for manually added assignees
-        avatarUrl: `https://picsum.photos/seed/${values.assigneeName}/40/40`,
-        avatarHint: "person avatar",
+        name: assignee.name,
+        avatarUrl: assignee.avatarUrl,
+        avatarHint: assignee.avatarHint,
       },
       priority: values.priority as Priority,
       status: values.status as TaskStatus,
@@ -138,7 +143,7 @@ export function CreateTaskDialog({ onCreate, children }: CreateTaskDialogProps) 
                   <FormItem>
                     <FormLabel>Assignee</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Alex Moran" {...field} />
+                      <AssigneeSelector value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

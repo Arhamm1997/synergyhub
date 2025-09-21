@@ -1,22 +1,39 @@
 import { Request, Response, NextFunction } from 'express';
-import { validationResult, ValidationChain } from 'express-validator';
+import { AnyZodObject, ZodError, z } from 'zod';
+import { logger } from '../utils/logger';
 
-export const validate = (validations: ValidationChain[]) => {
+type ValidationSchemaObject = {
+  body?: z.ZodType<any, any>;
+  query?: z.ZodType<any, any>;
+  params?: z.ZodType<any, any>;
+};
+
+export const validate = (schemas: ValidationSchemaObject) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    // Execute all validations
-    await Promise.all(validations.map(validation => validation.run(req)));
-
-    // Get validation errors
-    const errors = validationResult(req);
-    if (errors.isEmpty()) {
+    try {
+      if (schemas.body) {
+        req.body = await schemas.body.parseAsync(req.body);
+      }
+      if (schemas.query) {
+        req.query = await schemas.query.parseAsync(req.query);
+      }
+      if (schemas.params) {
+        req.params = await schemas.params.parseAsync(req.params);
+      }
       return next();
+    } catch (error) {
+      if (error instanceof ZodError) {
+        logger.error('Validation error:', error);
+        return res.status(400).json({
+          status: 'error',
+          message: 'Validation failed',
+          errors: error.errors.map(e => ({
+            field: e.path.join('.'),
+            message: e.message
+          }))
+        });
+      }
+      return next(error);
     }
-
-    // Return validation errors directly
-    return res.status(400).json({
-      status: 'error',
-      message: 'Validation failed',
-      errors: errors.array()
-    });
   };
 };

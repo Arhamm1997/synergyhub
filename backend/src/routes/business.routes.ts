@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { BusinessController } from '../controllers/business.controller';
-import { auth } from '../middleware/auth';
-import { validateRequest } from '../middleware/validate-request';
+import { authenticate } from '../middleware/auth.middleware';
+import { validate } from '../middleware/validation.middleware';
 import { businessValidation } from '../validations/business.validation';
 
 const router = Router();
@@ -10,40 +10,54 @@ const controller = new BusinessController();
 // Create a new business
 router.post(
   '/',
-  auth,
-  validateRequest(businessValidation.createBusiness),
+  authenticate,
+  validate(businessValidation.createBusiness),
   controller.createBusiness
 );
 
 // Get all businesses
-router.get('/', auth, controller.getAllBusinesses);
+router.get('/', authenticate, controller.getAllBusinesses);
 
-// Get business by ID
-router.get('/:id', auth, controller.getBusinessById);
+// More specific routes FIRST (before generic /:businessId)
+router.get('/:businessId/member-quotas', 
+  authenticate,
+  (req, res, next) => {
+    // Log the request for debugging
+    console.log('Member quotas request:', {
+      businessId: req.params.businessId,
+      user: req.user?._id
+    });
+    next();
+  },
+  controller.getMemberQuotas
+);
+
+// Generic routes AFTER specific ones
+router.get('/:businessId', authenticate, controller.getBusinessById);
 
 // Update business
 router.put(
   '/:id',
-  auth,
-  validateRequest(businessValidation.updateBusiness),
+  authenticate,
+  validate(businessValidation.updateBusiness),
   controller.updateBusiness
 );
 
 // Delete business
-router.delete('/:id', auth, controller.deleteBusiness);
+router.delete('/:id', authenticate, controller.deleteBusiness);
 
 // Add member to business
 router.post(
   '/:id/members',
-  auth,
-  validateRequest(businessValidation.addMember),
+  authenticate,
+  validate(businessValidation.addMember),
   controller.addMember
 );
 
 // Remove member from business
 router.delete(
   '/:id/members/:memberId',
-  auth,
+  authenticate,
   controller.removeMember
 );
 

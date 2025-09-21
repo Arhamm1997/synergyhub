@@ -63,3 +63,39 @@ export const sendTaskAssignmentEmail = async (
 
   return sendEmail({ to, subject, html });
 };
+
+export const sendInvitationEmail = async (
+  to: string,
+  inviteUrl: string,
+  businessName?: string,
+  inviterName?: string
+) => {
+  const subject = businessName 
+    ? `Invitation to join ${businessName} on SynergyHub`
+    : 'Invitation to join SynergyHub';
+  
+  const html = `
+    <h2>You've been invited to join ${businessName}</h2>
+    <p>Hello,</p>
+    <p>${inviterName} has invited you to join their team on SynergyHub.</p>
+    <div style="margin: 20px; padding: 20px; background-color: #f5f5f5; border-radius: 5px;">
+      <p>As a team member, you'll have access to:</p>
+      <ul>
+        <li>Project dashboards and tasks</li>
+        <li>Team chat and collaboration</li>
+        <li>Client management</li>
+        <li>And more!</li>
+      </ul>
+    </div>
+    <p>To accept this invitation, please click the button below:</p>
+    <div style="margin: 30px 0;">
+      <a href="${inviteUrl}" style="background-color: #0070f3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+        Accept Invitation
+      </a>
+    </div>
+    <p style="color: #666;">This invitation will expire in 7 days.</p>
+    <p>Best regards,<br>SynergyHub Team</p>
+  `;
+
+  return sendEmail({ to, subject, html });
+};
