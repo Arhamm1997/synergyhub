@@ -8,7 +8,7 @@ export interface IUser extends Document {
   password: string;
   role: Role;
   permissions?: Permission[];
-  department: Department;
+  department?: Department;
   avatarUrl?: string;
   avatarHint?: string;
   status: UserStatus;
@@ -60,7 +60,7 @@ const userSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>({
   department: {
     type: String,
     enum: Department,
-    required: true
+    required: false
   },
   avatarUrl: String,
   avatarHint: String,

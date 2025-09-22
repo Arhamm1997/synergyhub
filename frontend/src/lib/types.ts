@@ -11,11 +11,68 @@ export enum Role {
   Client = "Client"
 }
 
+export enum AdminPermission {
+  ManageAdmins = "manage_admins",
+  ManageMembers = "manage_members",
+  ManageRoles = "manage_roles",
+  ManagePermissions = "manage_permissions",
+  ViewAuditLogs = "view_audit_logs"
+}
+
+export enum TaskPermission {
+  ViewTask = "view_task",
+  EditTask = "edit_task",
+  DeleteTask = "delete_task",
+  AssignTask = "assign_task",
+  ReadComments = "read_comments",
+  WriteComments = "write_comments"
+}
+
+export const DEFAULT_ROLE_PERMISSIONS = {
+  [Role.SuperAdmin]: [
+    TaskPermission.ViewTask,
+    TaskPermission.EditTask,
+    TaskPermission.DeleteTask,
+    TaskPermission.AssignTask,
+    TaskPermission.ReadComments,
+    TaskPermission.WriteComments,
+    AdminPermission.ManageAdmins,
+    AdminPermission.ManageMembers,
+    AdminPermission.ManageRoles,
+    AdminPermission.ManagePermissions,
+    AdminPermission.ViewAuditLogs
+  ],
+  [Role.Admin]: [
+    TaskPermission.ViewTask,
+    TaskPermission.EditTask,
+    TaskPermission.DeleteTask,
+    TaskPermission.AssignTask,
+    TaskPermission.ReadComments,
+    TaskPermission.WriteComments,
+    AdminPermission.ManageMembers,
+    AdminPermission.ViewAuditLogs
+  ],
+  [Role.Member]: [
+    TaskPermission.ViewTask,
+    TaskPermission.ReadComments,
+    TaskPermission.WriteComments
+  ],
+  [Role.Client]: [
+    TaskPermission.ViewTask
+  ]
+}
+
 export interface BusinessQuotas {
   maxAdmins: number;
   maxMembers: number;
   currentAdmins: number;
   currentMembers: number;
+}
+
+export interface MemberQuota {
+  total: number;
+  used: number;
+  remaining: number;
 }
 
 export type Priority = "Urgent" | "High" | "Medium" | "Low" | "None";
@@ -78,18 +135,49 @@ export interface Client {
   services?: string[];
 }
 
-export interface Member {
-    id: string;
-    name: string;
-    role: Role;
-    department: Department;
-    email: string;
-    avatarUrl: string;
-    avatarHint: string;
-    details?: string;
-    permissions?: string[];
-    status: UserStatus;
-    lastActive?: Date;
+export interface User {
+  id: string;
+  name: string;
+  role: Role;
+  department?: Department;
+  email: string;
+  avatarUrl?: string;
+  avatarHint?: string;
+  details?: string;
+  permissions?: string[];
+  status: UserStatus;
+  lastActive?: Date;
+}
+
+export interface Member extends User {
+  business: string;
+}
+
+export interface AdminUser extends Member {
+  lastLogin?: Date;
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
+}
+
+export interface AdminInvitation {
+  id: string;
+  email: string;
+  role: Role;
+  invitedBy: string;
+  invitedAt: Date;
+  expiresAt: Date;
+  status: 'pending' | 'accepted' | 'expired';
+}
+
+export interface AdminAuditLog {
+  id: string;
+  action: string;
+  performedBy: string;
+  targetUser?: string;
+  details: string;
+  timestamp: Date;
 }
 
 export interface Business {
@@ -102,6 +190,7 @@ export interface Business {
   notes: string;
   quotas: BusinessQuotas;
   members: Member[];
+  admins: AdminUser[];
 }
 
 

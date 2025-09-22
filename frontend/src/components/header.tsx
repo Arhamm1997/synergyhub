@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, LogOut, User, Settings, LayoutGrid, PlusCircle, UserPlus, Mail, FolderKanban, ListChecks, MessageSquare, Users as UsersIcon } from "lucide-react";
+import { RoleBadge } from "@/components/ui/role-badge";
+import { Role } from "@/lib/types";
 
 import {
   DropdownMenu,
@@ -118,11 +120,14 @@ export function Header() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Alex Moran</p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  Team Lead
-                </p>
+              <div className="flex flex-col space-y-2">
+                <div className="flex flex-col">
+                  <p className="text-sm font-medium leading-none">Alex Moran</p>
+                  <p className="text-xs leading-none text-muted-foreground mt-1">
+                    alex@example.com
+                  </p>
+                </div>
+                <RoleBadge role={Role.Admin} size="sm" />
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

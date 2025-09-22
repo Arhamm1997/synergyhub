@@ -6,10 +6,11 @@ export const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:5000';
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {
-    REGISTER: '/auth/register',
+    SIGNUP: '/auth/signup',
     LOGIN: '/auth/login',
     LOGOUT: '/auth/logout',
     ME: '/auth/me',
+    ADMIN_REQUESTS: '/auth/admin-requests',
   },
   // Projects
   PROJECTS: {

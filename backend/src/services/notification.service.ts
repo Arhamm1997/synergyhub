@@ -1,9 +1,18 @@
 import { Notification } from '../models/notification.model';
+import { User } from '../models/user.model';
+import { Role } from '../types/enums';
 import { prioritizeNotifications } from '../services/ai.service';
 import type { Types } from 'mongoose';
 
 interface CreateNotificationParams {
   user: Types.ObjectId;
+  message: string;
+  type: string;
+  data?: Record<string, any>;
+}
+
+interface NotificationPayload {
+  title: string;
   message: string;
   type: string;
   data?: Record<string, any>;
@@ -63,3 +72,25 @@ export const sendNotification = async ({
 export const markNotificationRead = async (notificationId: string) => {
   return Notification.findByIdAndUpdate(notificationId, { read: true });
 };
+
+export class NotificationService {
+  async notifyAdmins(notification: NotificationPayload) {
+    try {
+      const admins = await User.find({ role: Role.Admin });
+      for (const admin of admins) {
+        await this.notify(admin._id, notification);
+      }
+    } catch (error) {
+      console.error('Error notifying admins:', error);
+    }
+  }
+
+  async notify(userId: Types.ObjectId, notification: NotificationPayload) {
+    return sendNotification({
+      user: userId,
+      message: notification.message,
+      type: notification.type,
+      data: notification.data
+    });
+  }
+}

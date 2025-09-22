@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,11 +24,20 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/logo";
 import { useToast } from "@/hooks/use-toast";
-import { api } from "@/lib/api-config";
+import { api, API_ENDPOINTS } from "@/lib/api-config";
 import { InvitationValidation } from "@/components/auth/invitation-validation";
+
+import { Role } from "@/lib/types";
 
 const formSchema = z
   .object({
@@ -39,7 +49,10 @@ const formSchema = z
       message: "Password must be at least 8 characters.",
     }),
     confirmPassword: z.string(),
+
     businessId: z.string().optional(),
+    role: z.enum([Role.Admin, Role.Member]).default(Role.Member),
+    invitationToken: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match.",
@@ -49,6 +62,7 @@ const formSchema = z
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -57,32 +71,50 @@ export default function SignupPage() {
       email: "",
       password: "",
       confirmPassword: "",
+      department: "General",
       businessId: "",
+      role: Role.Member,
+      invitationToken: searchParams.get("invitation") || "",
     },
   });
 
-  const handleValidInvitation = (businessId: string, email: string) => {
+  const handleValidInvitation = (businessId: string, email: string, role: Role) => {
     form.setValue("businessId", businessId);
     form.setValue("email", email);
+    form.setValue("role", role);
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await api.post('/auth/signup', {
+      const formData = {
         name: values.name,
         email: values.email,
         password: values.password,
-        businessId: values.businessId || undefined
-      });
+        confirmPassword: values.confirmPassword,
+    
+        businessId: values.businessId || undefined,
+        role: values.role || Role.Member,
+        invitationToken: values.invitationToken
+      };
 
-      toast({
-        title: "Account Created",
-        description: values.businessId
-          ? "Your account has been created! Welcome to the team."
-          : "Your account has been created! Please log in to continue.",
-      });
+      const response = await api.post(API_ENDPOINTS.AUTH.SIGNUP, formData);
 
-      router.push('/');
+      // Check if it's a pending admin request
+      if (response.data?.requestStatus === 'pending') {
+        toast({
+          title: "Admin Request Submitted",
+          description: "Your request to join as an admin has been submitted and is pending approval.",
+        });
+        router.push('/admin-request-pending');
+      } else {
+        toast({
+          title: "Account Created",
+          description: values.businessId
+            ? `Your account has been created! Welcome to the team as ${values.role || 'a member'}!`
+            : "Your account has been created! Please log in to continue.",
+        });
+        router.push('/');
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -138,9 +170,9 @@ export default function SignupPage() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="m@example.com" 
-                            {...field} 
+                          <Input
+                            placeholder="m@example.com"
+                            {...field}
                             disabled={form.getValues("businessId") !== ""}
                           />
                         </FormControl>
@@ -161,7 +193,7 @@ export default function SignupPage() {
                       </FormItem>
                     )}
                   />
-                   <FormField
+                  <FormField
                     control={form.control}
                     name="confirmPassword"
                     render={({ field }) => (
@@ -174,6 +206,32 @@ export default function SignupPage() {
                       </FormItem>
                     )}
                   />
+                  {!form.getValues("businessId") && (
+                    <FormField
+                      control={form.control}
+                      name="role"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Join as</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select your role" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value={Role.Admin}>Administrator</SelectItem>
+                              <SelectItem value={Role.Member}>Team Member</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                   <Button type="submit" className="w-full">
                     Create Account
                   </Button>
