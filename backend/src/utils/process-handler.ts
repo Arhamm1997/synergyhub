@@ -32,7 +32,7 @@ export const setupProcessHandlers = (server: Server) => {
   signals.forEach(signal => {
     // Remove any existing listeners for this signal
     process.removeAllListeners(signal);
-    
+
     // Add new listener
     process.once(signal, () => shutdown(signal));
   });
