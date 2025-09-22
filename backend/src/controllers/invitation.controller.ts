@@ -55,9 +55,9 @@ export class InvitationController {
       const businessName = business ? business.name : undefined;
       const inviterName = req.user.name;
 
-      // Send invitation email
+      // Send invitation email with role-specific template
       const inviteUrl = `${config.frontendUrl}/signup?token=${token}`;
-      await sendInvitationEmail(email, inviteUrl, businessName, inviterName);
+      await sendInvitationEmail(email, inviteUrl, role, businessName, inviterName);
 
       return res.status(201).json({
         message: 'Invitation sent successfully',
@@ -100,9 +100,9 @@ export class InvitationController {
       const inviter = await User.findById(invitation.invitedBy);
       const inviterName = inviter ? inviter.name : undefined;
 
-      // Resend invitation email
+      // Resend invitation email with role-specific template
       const inviteUrl = `${config.frontendUrl}/signup?token=${invitation.token}`;
-      await sendInvitationEmail(invitation.email, inviteUrl, businessName, inviterName);
+      await sendInvitationEmail(invitation.email, inviteUrl, invitation.role, businessName, inviterName);
 
       return res.status(200).json({
         message: 'Invitation resent successfully',
