@@ -54,7 +54,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { NotificationPrioritizer } from "@/components/notifications/notification-prioritizer";
-import placeholderImages from "@/lib/placeholder-images.json";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
@@ -317,7 +316,7 @@ function InviteDialog() {
 
 export function Header() {
   const pathname = usePathname();
-  const userAvatar = placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1');
+  const { user } = useUser();
 
   const getPageTitle = () => {
     const currentNav = navItems.find(item => pathname.startsWith(item.href));
@@ -348,8 +347,16 @@ export function Header() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
               <Avatar className="h-8 w-8">
-                 {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt="User avatar" data-ai-hint={userAvatar.imageHint} />}
-                <AvatarFallback>AM</AvatarFallback>
+                {user?.avatarUrl ? (
+                  <AvatarImage 
+                    src={user.avatarUrl} 
+                    alt={`${user.name}'s avatar`} 
+                  />
+                ) : (
+                  <AvatarFallback>
+                    {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || '??'}
+                  </AvatarFallback>
+                )}
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
@@ -357,12 +364,12 @@ export function Header() {
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-2">
                 <div className="flex flex-col">
-                  <p className="text-sm font-medium leading-none">Alex Moran</p>
+                  <p className="text-sm font-medium leading-none">{user?.name || 'Unknown User'}</p>
                   <p className="text-xs leading-none text-muted-foreground mt-1">
-                    alex@example.com
+                    {user?.email || 'No email'}
                   </p>
                 </div>
-                <RoleBadge role={Role.Admin} size="sm" />
+                {user?.role && <RoleBadge role={user.role} size="sm" />}
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
