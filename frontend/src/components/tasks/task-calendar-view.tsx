@@ -126,6 +126,7 @@ export function TaskCalendarView({ tasks, onEventClick }: TaskCalendarViewProps)
         end: parseISO(task.dueDate),
         allDay: true,
         isTask: true,
+        key: `${task.id}-${task.dueDate}` // Add a key that changes when the date changes
       }));
     setEvents(prev => [...taskEvents, ...prev.filter(e => !e.isTask)]);
   }, [tasks]);
@@ -152,12 +153,19 @@ export function TaskCalendarView({ tasks, onEventClick }: TaskCalendarViewProps)
   }
 
 
+  // Force a re-render when tasks change
+  const [key, setKey] = React.useState(0);
+  React.useEffect(() => {
+    setKey(prev => prev + 1);
+  }, [tasks]);
+
   return (
     <>
     <Card className="mt-4">
       <CardContent className="p-2 md:p-4">
         <div className="h-[70vh]">
           <Calendar
+            key={key}
             localizer={localizer}
             events={events}
             startAccessor="start"

@@ -1,46 +1,49 @@
 
+"use client";
+
 import { ProjectTaskView } from "@/components/tasks/task-views";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import type { Project } from "@/lib/types";
 import { notFound } from "next/navigation";
-import { initialProjects } from "@/lib/project-data";
 import { Button } from "@/components/ui/button";
 import { Pen } from "lucide-react";
+import { useProjectStore } from "@/store/project-store";
 
 
 const statusVariant: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
-  "Not Started": "outline",
-  "In Progress": "default",
-  "Completed": "secondary",
-  "On Hold": "destructive",
-  "Cancelled": "destructive",
+    "Not Started": "outline",
+    "In Progress": "default",
+    "Completed": "secondary",
+    "On Hold": "destructive",
+    "Cancelled": "destructive",
 };
 
-function getProject(id: string): Project | undefined {
-    return initialProjects.find(p => p.id === id);
-}
+type Props = {
+    params: { id: string }
+};
 
-export default function ProjectDetailsPage({ params }: { params: { id: string } }) {
+export default function ProjectDetailsPage({ params }: Props) {
+    const { getProject } = useProjectStore();
     const project = getProject(params.id);
 
     if (!project) {
         notFound();
     }
-    
+
     // Assuming the first person in the team array is the lead for this example
     const teamLead = project.team[0];
-    
+
     return (
         <div className="flex flex-col gap-8">
-             <header className="flex items-start justify-between">
+            <header className="flex items-start justify-between">
                 <div className="space-y-2">
                     <Badge variant="outline">{project.client}</Badge>
                     <h1 className="text-4xl font-bold tracking-tight">{project.name}</h1>
@@ -48,10 +51,10 @@ export default function ProjectDetailsPage({ params }: { params: { id: string } 
                 </div>
                 <Button variant="outline"><Pen className="mr-2 h-4 w-4" /> Edit Project</Button>
             </header>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-1 space-y-6">
-                     <Card>
+                    <Card>
                         <CardHeader>
                             <CardTitle>Project Details</CardTitle>
                         </CardHeader>
@@ -68,7 +71,7 @@ export default function ProjectDetailsPage({ params }: { params: { id: string } 
                                 <span className="text-muted-foreground">Deadline</span>
                                 <span>{project.deadline}</span>
                             </div>
-                             <div className="flex justify-between">
+                            <div className="flex justify-between">
                                 <span className="text-muted-foreground">Team Lead</span>
                                 <span>{teamLead?.name || 'N/A'}</span>
                             </div>
@@ -81,7 +84,7 @@ export default function ProjectDetailsPage({ params }: { params: { id: string } 
                             </div>
                         </CardContent>
                     </Card>
-                     <Card>
+                    <Card>
                         <CardHeader>
                             <CardTitle>Team Members</CardTitle>
                         </CardHeader>
@@ -105,7 +108,11 @@ export default function ProjectDetailsPage({ params }: { params: { id: string } 
                 </div>
 
                 <div className="lg:col-span-2">
-                     <ProjectTaskView initialTasks={project.tasks} title="Project Tasks" />
+                    <ProjectTaskView 
+                        initialTasks={project.tasks} 
+                        title="Project Tasks" 
+                        projectId={project.id} 
+                    />
                 </div>
             </div>
 

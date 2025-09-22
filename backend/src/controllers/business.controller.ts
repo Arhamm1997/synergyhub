@@ -65,7 +65,7 @@ export class BusinessController {
 
       // Check if user is member of this business
       const userId = req.user?._id;
-      const isMember = business.members.some((member: any) => 
+      const isMember = business.members.some((member: any) =>
         member._id.toString() === userId?.toString()
       );
 
@@ -107,7 +107,7 @@ export class BusinessController {
 
       // Check if user is member of this business
       const userId = req.user._id;
-      const isMember = business.members.some((member: any) => 
+      const isMember = business.members.some((member: any) =>
         member._id.toString() === userId?.toString()
       );
 
@@ -159,7 +159,7 @@ export class BusinessController {
       res.json(response);
     } catch (error) {
       logger.error('Error getting member quotas:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: 'Error getting member quotas',
         error: process.env.NODE_ENV === 'development' ? error.message : undefined
       });

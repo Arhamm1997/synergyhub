@@ -19,7 +19,7 @@ router.post(
 router.get('/', authenticate, controller.getAllBusinesses);
 
 // More specific routes FIRST (before generic /:businessId)
-router.get('/:businessId/member-quotas', 
+router.get('/:businessId/member-quotas',
   authenticate,
   (req, res, next) => {
     // Log the request for debugging

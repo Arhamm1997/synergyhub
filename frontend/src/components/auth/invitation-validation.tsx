@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 interface InvitationValidationProps {
-  onValidInvitation: (businessId: string, email: string) => void;
+  onValidInvitation: (businessId: string, email: string, role: Role) => void;
 }
 
 export function InvitationValidation({ onValidInvitation }: InvitationValidationProps) {
@@ -22,14 +22,14 @@ export function InvitationValidation({ onValidInvitation }: InvitationValidation
     const validateInvitation = async () => {
       try {
         const response = await api.get(`/invitations/validate?token=${token}`);
-        const { businessId, email } = response.data;
+        const { businessId, email, role } = response.data;
 
         toast({
           title: "Invitation Valid",
-          description: "Please complete your account setup to join the team.",
+          description: `Please complete your account setup to join as ${role}.`,
         });
 
-        onValidInvitation(businessId, email);
+        onValidInvitation(businessId, email, role);
       } catch (error: any) {
         toast({
           title: "Invalid Invitation",

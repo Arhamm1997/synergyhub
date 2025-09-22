@@ -52,7 +52,7 @@ export function InviteMemberDialog({ businessId, onInviteSent, currentUserRole }
       if (!businessId) {
         throw new Error('Business ID is required');
       }
-      
+
       const response = await api.get(`/businesses/${businessId}/member-quotas`);
       setQuotas(response.data.quotas);
     } catch (error: any) {
@@ -73,7 +73,7 @@ export function InviteMemberDialog({ businessId, onInviteSent, currentUserRole }
   const handleInvite = async () => {
     try {
       setIsLoading(true);
-      
+
       // Validate required fields
       if (!memberData.email || !memberData.name || !memberData.department || !memberData.startDate) {
         toast({
@@ -178,8 +178,8 @@ export function InviteMemberDialog({ businessId, onInviteSent, currentUserRole }
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Role *</Label>
-              <Select 
-                value={memberData.role} 
+              <Select
+                value={memberData.role}
                 onValueChange={(value: string) => setMemberData({ ...memberData, role: value as Role })}
               >
                 <SelectTrigger>
@@ -255,8 +255,8 @@ export function InviteMemberDialog({ businessId, onInviteSent, currentUserRole }
           >
             Cancel
           </Button>
-          <Button 
-            onClick={handleInvite} 
+          <Button
+            onClick={handleInvite}
             disabled={!memberData.email || !memberData.name || !memberData.department || !memberData.startDate || isLoading}
           >
             {isLoading ? 'Sending...' : 'Send Invitation'}

@@ -6,7 +6,6 @@ const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters').max(40),
   confirmPassword: z.string(),
-  department: z.string().min(1, 'Department is required'),
   role: z.nativeEnum(Role).default(Role.Member)
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",

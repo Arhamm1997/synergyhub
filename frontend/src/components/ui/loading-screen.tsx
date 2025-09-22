@@ -10,10 +10,10 @@ interface LoadingScreenProps {
   className?: string;
 }
 
-export function LoadingScreen({ 
-  fullScreen = true, 
-  message = 'Loading...', 
-  className 
+export function LoadingScreen({
+  fullScreen = true,
+  message = 'Loading...',
+  className
 }: LoadingScreenProps) {
   // Prevent scroll while loading on full screen
   useEffect(() => {

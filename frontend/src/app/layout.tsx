@@ -1,10 +1,11 @@
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from '@/components/theme-provider';
 import { ConnectionStatus } from '@/components/connection-status';
 import { LoadingProvider } from '@/providers/loading-provider';
 import { RouteChangeLoader } from '@/components/route-change-loader';
+import { CompilationLoader } from '@/components/compilation-loader';
 
 export const metadata: Metadata = {
   title: 'SynergyHub',
@@ -32,6 +33,7 @@ export default function RootLayout({
         >
           <LoadingProvider>
             <RouteChangeLoader />
+            <CompilationLoader />
             {children}
             <Toaster />
             <ConnectionStatus />

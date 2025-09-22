@@ -20,12 +20,12 @@ export function RouteChangeLoader() {
     }
 
     const currentPath = pathname + '?' + searchParams?.toString();
-    
+
     // Only show loading if path actually changed
     if (currentPath !== prevPathRef.current) {
       prevPathRef.current = currentPath;
       startLoading('Loading page...');
-      
+
       // Short delay to prevent flash
       const timer = setTimeout(() => {
         stopLoading();

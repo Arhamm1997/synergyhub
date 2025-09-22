@@ -3,9 +3,11 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useCommentStore } from "@/store/comment-store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format, parseISO } from "date-fns";
+import { useTaskPermissions } from "@/hooks/use-task-permissions";
 import {
   MessageSquare,
   Paperclip,
@@ -19,6 +21,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useNotificationStore } from "@/store/notification-store";
 import {
   Dialog,
   DialogContent,
@@ -42,6 +45,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AssigneeSelector } from "./assignee-selector";
 import { useMemberStore } from "@/store/member-store";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
+import placeholderImages from "@/lib/placeholder-images.json";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -65,6 +69,14 @@ interface TaskDetailDialogProps {
 export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask, onDeleteTask }: TaskDetailDialogProps) {
     const { toast } = useToast();
     const [comment, setComment] = useState("");
+    const {
+        canView,
+        canEdit: canEditTask,
+        canDelete: canDeleteTask,
+        canAssign: canChangeAssignee,
+        canReadComments,
+        canWriteComments: canAddComment
+    } = useTaskPermissions(task.id);
 
     const form = useForm<TaskFormValues>({
         resolver: zodResolver(formSchema),
@@ -80,36 +92,97 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask, onDel
 
   const { members } = useMemberStore();
 
-  const onSubmit = (values: TaskFormValues) => {
+  const onSubmit = async (values: TaskFormValues) => {
+    // Verify permissions before proceeding
+    if (!canEditTask && !canChangeAssignee) {
+      toast({ 
+        title: "Permission Denied",
+        description: "You don't have permission to edit this task.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const assignee = members.find(m => m.name === values.assigneeName);
     if (!assignee) return;
 
+    const isAssigneeChanged = task.assignee.name !== assignee.name;
+
+    // Check specific permission for assignee change
+    if (isAssigneeChanged && !canChangeAssignee) {
+      toast({ 
+        title: "Permission Denied",
+        description: "You don't have permission to change the task assignee.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const updatedTask: Task = {
       ...task,
-      ...values,
-      assignee: {
+      ...(canEditTask ? values : {}),
+      assignee: canChangeAssignee && isAssigneeChanged ? {
         name: assignee.name,
         avatarUrl: assignee.avatarUrl,
         avatarHint: assignee.avatarHint,
-      },
-      dueDate: format(values.dueDate, "yyyy-MM-dd"),
-      priority: values.priority as Priority,
-      status: values.status as TaskStatus
+      } : task.assignee,
+      dueDate: canEditTask ? format(values.dueDate, "yyyy-MM-dd") : task.dueDate,
+      priority: canEditTask ? (values.priority as Priority) : task.priority,
+      status: canEditTask ? (values.status as TaskStatus) : task.status
     };
+    
+    // Update the task
     onUpdateTask(updatedTask);
+    
+    // Send notifications if assignee changed
+    if (isAssigneeChanged) {
+      useNotificationStore.getState().addNotification({
+        type: 'task_assigned',
+        title: 'Task Assigned',
+        message: `You have been assigned the task "${updatedTask.title}"`,
+        data: { taskId: updatedTask.id }
+      });
+    }
+
     toast({ title: "Task Updated", description: "The task details have been saved." });
+    onOpenChange(false);
   };
 
+  const { comments, addComment } = useCommentStore();
+  const taskComments = comments[task.id] || [];
+  
   const handleSendComment = () => {
+    if (!canAddComment) {
+      toast({ 
+        title: "Permission Denied",
+        description: "You don't have permission to add comments to this task.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (comment.trim() === "") return;
+    
+    // Add the comment
+    addComment(task.id, "current-user", comment);
+    
     toast({
-        title: "Comment Sent",
-        description: `Your comment has been sent to ${task.assignee.name}.`,
+        title: "Comment Added",
+        description: `Your comment has been added to the task.`,
     });
     setComment("");
   }
   
   const handleDelete = () => {
+    if (!canDeleteTask) {
+      toast({ 
+        title: "Permission Denied",
+        description: "You don't have permission to delete this task.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     onDeleteTask(task.id);
     onOpenChange(false);
     toast({ title: "Task Deleted", description: `Task "${task.title}" has been deleted.` });
@@ -125,29 +198,35 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask, onDel
                     control={form.control}
                     name="title"
                     render={({ field }) => (
-                        <Input {...field} className="text-2xl font-bold border-0 shadow-none -ml-2 focus-visible:ring-0" />
+                        <Input 
+                            {...field} 
+                            className="text-2xl font-bold border-0 shadow-none -ml-2 focus-visible:ring-0" 
+                            readOnly={!canEditTask}
+                        />
                     )}
                 />
             </DialogTitle>
-             <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the task.
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+             {canDeleteTask && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the task.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+             )}
           </DialogHeader>
           
           <div className="space-y-6 flex-grow">
@@ -168,25 +247,66 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask, onDel
             <Separator />
             
             <div className="space-y-4">
-                 <h3 className="font-semibold flex items-center gap-2"><MessageSquare className="h-5 w-5 text-muted-foreground" /> Comments</h3>
-                 <div className="flex items-start gap-3">
+                <h3 className="font-semibold flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-muted-foreground" /> 
+                    Comments ({taskComments.length})
+                </h3>
+                
+                {/* Comments List */}
+                <div className="space-y-4 max-h-[300px] overflow-y-auto">
+                    {taskComments.map((comment) => (
+                        <div key={comment.id} className="flex items-start gap-3">
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage 
+                                    src={placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl} 
+                                    alt="User avatar"
+                                />
+                                <AvatarFallback>U</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                                <div className="bg-muted rounded-lg p-3">
+                                    <p className="text-sm font-medium mb-1">
+                                        {comment.authorId}
+                                    </p>
+                                    <p className="text-sm">{comment.content}</p>
+                                </div>
+                                <span className="text-xs text-muted-foreground mt-1">
+                                    {new Date(comment.timestamp).toLocaleString()}
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* New Comment Input */}
+                <div className="flex items-start gap-3">
                     <Avatar className="h-8 w-8">
-                        <AvatarImage src={placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl} />
+                        <AvatarImage 
+                            src={placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl}
+                            alt="Current user avatar"
+                        />
                         <AvatarFallback>AM</AvatarFallback>
                     </Avatar>
                     <div className="relative w-full">
-                         <Textarea 
-                            placeholder="Write a comment..." 
+                        <Textarea 
+                            placeholder={canAddComment ? "Write a comment..." : "You don't have permission to comment"}
                             className="pr-24" 
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
-                         />
-                         <div className="absolute bottom-2 right-2 flex items-center gap-1">
-                             <Button variant="ghost" size="icon" className="h-8 w-8"><Paperclip className="h-4 w-4" /></Button>
-                            <Button size="sm" onClick={handleSendComment}><Send className="h-4 w-4" /></Button>
-                         </div>
+                            disabled={!canAddComment}
+                        />
+                        {canAddComment && (
+                            <div className="absolute bottom-2 right-2 flex items-center gap-1">
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <Paperclip className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" onClick={handleSendComment}>
+                                    <Send className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
                     </div>
-                 </div>
+                </div>
             </div>
           </div>
         </div>
@@ -195,6 +315,11 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask, onDel
            <h3 className="font-semibold">Details</h3>
            <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {!canEditTask && !canChangeAssignee && (
+                <div className="text-sm text-muted-foreground bg-muted p-2 rounded-md">
+                  You have view-only access to this task.
+                </div>
+              )}
                  <FormField
                     control={form.control}
                     name="assigneeName"
@@ -202,8 +327,13 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask, onDel
                     <FormItem className="flex items-center">
                         <FormLabel className="w-24 flex items-center gap-2 text-muted-foreground"><User className="h-4 w-4" /> Assignee</FormLabel>
                         <FormControl>
-                          <AssigneeSelector value={field.value} onChange={field.onChange} />
+                          <AssigneeSelector value={field.value} onChange={field.onChange} disabled={!canChangeAssignee} />
                         </FormControl>
+                        {!canChangeAssignee && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            You don't have permission to change the assignee
+                          </p>
+                        )}
                     </FormItem>
                     )}
                 />
@@ -213,7 +343,7 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask, onDel
                     render={({ field }) => (
                     <FormItem className="flex items-center">
                         <FormLabel className="w-24 flex items-center gap-2 text-muted-foreground"><Calendar className="h-4 w-4" /> Due Date</FormLabel>
-                        <DatePicker date={field.value} setDate={field.onChange} />
+                        <DatePicker date={field.value} setDate={field.onChange} disabled={!canEditTask} />
                     </FormItem>
                     )}
                 />
@@ -224,7 +354,7 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask, onDel
                     <FormItem className="flex items-center">
                         <FormLabel className="w-24 flex items-center gap-2 text-muted-foreground"><CheckCircle className="h-4 w-4" /> Status</FormLabel>
                          <FormControl>
-                           <Input placeholder="Select status" {...field} />
+                           <Input placeholder="Select status" {...field} readOnly={!canEditTask} />
                         </FormControl>
                     </FormItem>
                     )}
@@ -236,13 +366,19 @@ export function TaskDetailDialog({ open, onOpenChange, task, onUpdateTask, onDel
                     <FormItem className="flex items-center">
                         <FormLabel className="w-24 flex items-center gap-2 text-muted-foreground"><Flag className="h-4 w-4" /> Priority</FormLabel>
                         <FormControl>
-                           <Input placeholder="Select priority" {...field} />
+                           <Input placeholder="Select priority" {...field} readOnly={!canEditTask} />
                         </FormControl>
                     </FormItem>
                     )}
                 />
 
-                <Button type="submit" className="w-full">Save Changes</Button>
+                <Button 
+                    type="submit" 
+                    className="w-full"
+                    disabled={!canEditTask && !canChangeAssignee}
+                >
+                    Save Changes
+                </Button>
             </form>
            </Form>
         </div>

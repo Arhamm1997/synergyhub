@@ -70,6 +70,7 @@ import { useChatStore } from "@/store/chat-store";
 import { initialTasks } from "./task-data";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useProjectStore } from "@/store/project-store";
 
 
 export const priorityVariant: { [key in Task["priority"]]: "destructive" | "secondary" | "default" | "outline" } = {
@@ -277,8 +278,15 @@ const KanbanCard = ({ task, index, onCardClick }: { task: Task; index: number; o
 };
 
 
-export function ProjectTaskView({ initialTasks: projectTasks, title }: { initialTasks: Task[], title: string }) {
+interface ProjectTaskViewProps {
+  initialTasks: Task[];
+  title: string;
+  projectId?: string;
+}
+
+export function ProjectTaskView({ initialTasks: projectTasks, title, projectId }: ProjectTaskViewProps) {
   const [tasks, setTasks] = React.useState<Task[]>(projectTasks);
+  const { updateProject, getProject } = useProjectStore();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({ id: false });
@@ -342,6 +350,18 @@ export function ProjectTaskView({ initialTasks: projectTasks, title }: { initial
 
   const handleUpdateTask = (updatedTask: Task) => {
     setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
+    
+    // Update project if this is part of a project
+    if (projectId) {
+      const project = getProject(projectId);
+      if (project) {
+        const updatedProject = {
+          ...project,
+          tasks: project.tasks.map(t => t.id === updatedTask.id ? updatedTask : t)
+        };
+        updateProject(updatedProject);
+      }
+    }
   };
   
   const handleDeleteTask = (taskId: string) => {
