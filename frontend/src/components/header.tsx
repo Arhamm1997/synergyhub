@@ -4,18 +4,15 @@
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, LogOut, User, Settings, LayoutGrid, PlusCircle, UserPlus, Mail, FolderKanban, ListChecks, MessageSquare, Users as UsersIcon } from "lucide-react";
-import { RoleBadge } from "@/components/ui/role-badge";
+import { Search, LogOut, User, Settings, LayoutGrid, PlusCircle, UserPlus, Shield, Briefcase, FolderKanban, ListChecks, MessageSquare, Users as UsersIcon } from "lucide-react";
+import { useState } from "react";
 import { Role } from "@/lib/types";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useUser } from "@/hooks/use-user";
+import { api } from "@/lib/api-config";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -25,9 +22,35 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { RoleBadge } from "@/components/ui/role-badge";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { NotificationPrioritizer } from "@/components/notifications/notification-prioritizer";
@@ -44,40 +67,252 @@ const navItems = [
     { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
+const inviteFormSchema = z.object({
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+  name: z.string().min(1, "Full name is required"),
+  role: z.nativeEnum(Role),
+  department: z.string().min(1, "Department is required"),
+  phoneNumber: z.string().optional(),
+  message: z.string().optional()
+});
+
+type InviteFormValues = z.infer<typeof inviteFormSchema>;
+
 function InviteDialog() {
+    const { user } = useUser();
+    const { toast } = useToast();
+    const [open, setOpen] = useState(false);
+    const form = useForm<InviteFormValues>({
+        resolver: zodResolver(inviteFormSchema),
+        defaultValues: {
+            email: "",
+            name: "",
+            role: Role.Member,
+            department: "",
+            phoneNumber: "",
+            message: ""
+        }
+    });
+
+    const isLoading = form.formState.isSubmitting;
+
+    async function onSubmit(data: InviteFormValues) {
+        if (!user?.id) {
+            toast({
+                title: 'Error',
+                description: 'You must be logged in to send invitations',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        try {
+            await api.post('/invitations/send', {
+                ...data,
+                status: 'Pending'
+            });
+
+            toast({
+                title: 'Invitation sent',
+                description: `An invitation has been sent to ${data.email}`,
+            });
+            form.reset();
+            setOpen(false);
+        } catch (error: any) {
+            toast({
+                title: 'Error',
+                description: error?.response?.data?.message || 'Failed to send invitation',
+                variant: 'destructive',
+            });
+        }
+    }
+
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="ghost" size="icon">
                     <UserPlus className="h-5 w-5" />
                     <span className="sr-only">Invite members</span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[525px]">
                 <DialogHeader>
-                    <DialogTitle>Invite Members</DialogTitle>
+                    <DialogTitle>Invite Team Member</DialogTitle>
                     <DialogDescription>
-                        Enter the email addresses of the people you want to invite.
+                        Send an invitation to join your team. They'll receive an email with a link to accept.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="email" className="text-right">
-                            <Mail className="h-5 w-5 inline-block" />
-                        </Label>
-                        <Input
-                            id="email"
-                            placeholder="name@example.com"
-                            className="col-span-3"
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <FormField
+                            control={form.control}
+                            name="role"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Role</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a role" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {(user?.role === Role.SuperAdmin || user?.role === Role.Admin) && (
+                                                <SelectItem value={Role.Admin}>
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <Shield className="h-4 w-4" />
+                                                            <span>Administrator</span>
+                                                        </div>
+                                                        <RoleBadge role={Role.Admin} size="sm" />
+                                                    </div>
+                                                </SelectItem>
+                                            )}
+                                            <SelectItem value={Role.Member}>
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <User className="h-4 w-4" />
+                                                        <span>Team Member</span>
+                                                    </div>
+                                                    <RoleBadge role={Role.Member} size="sm" />
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value={Role.Client}>
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <Briefcase className="h-4 w-4" />
+                                                        <span>Client</span>
+                                                    </div>
+                                                    <RoleBadge role={Role.Client} size="sm" />
+                                                </div>
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <div className="rounded-lg border p-3">
+                                        <p className="text-sm text-muted-foreground">
+                                            {field.value === Role.Admin ? 'Full access to manage team, projects, and settings.' :
+                                             field.value === Role.Member ? 'Access to assigned projects and tasks.' :
+                                             'Limited access to view assigned projects and communicate with team.'}
+                                        </p>
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
                         />
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button type="submit">Send Invitation</Button>
-                </DialogFooter>
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Email</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="name@example.com" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Full Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="John Doe" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="department"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Department</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Engineering" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="phoneNumber"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Phone Number (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="+1 (555) 000-0000" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <FormField
+                            control={form.control}
+                            name="message"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Personal Message (Optional)</FormLabel>
+                                    <FormControl>
+                                        <Input 
+                                            placeholder="Add a personal message to the invitation email" 
+                                            {...field} 
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <DialogFooter>
+                            <Button
+                                type="submit"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <svg
+                                            className="mr-2 h-4 w-4 animate-spin"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                            />
+                                            <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                            />
+                                        </svg>
+                                        Sending Invitation...
+                                    </>
+                                ) : (
+                                    'Send Invitation'
+                                )}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
             </DialogContent>
         </Dialog>
-    )
+    );
 }
 
 export function Header() {
