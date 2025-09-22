@@ -28,12 +28,23 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Member } from "@/lib/types";
+import { Role } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { RoleBadge } from "@/components/ui/role-badge";
+import { Shield, User, Briefcase } from "lucide-react";
+import { useUser } from "@/hooks/use-user";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const formSchema = z.object({
   name: z.string().min(1, "Member name is required"),
   email: z.string().email("Please enter a valid email address"),
-  role: z.string().min(1, "Role is required"),
+  role: z.nativeEnum(Role),
   department: z.string().min(1, "Department is required"),
   avatarUrl: z.string().optional(),
   details: z.string().optional(),
@@ -72,7 +83,7 @@ export function MemberDialog({ children, member, onSave, isOpen, onOpenChange }:
       form.reset({
         name: "",
         email: "",
-        role: "",
+        role: Role.Member, // Default role for new members
         department: "",
         avatarUrl: "",
         details: "",
@@ -171,15 +182,60 @@ export function MemberDialog({ children, member, onSave, isOpen, onOpenChange }:
                  <FormField
                 control={form.control}
                 name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Role</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g. Project Manager" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const { user } = useUser();
+                  return (
+                    <FormItem>
+                      <FormLabel>Role</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a role" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {(user?.role === Role.SuperAdmin || user?.role === Role.Admin) && (
+                            <SelectItem value={Role.Admin}>
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                  <Shield className="h-4 w-4" />
+                                  <span>Administrator</span>
+                                </div>
+                                <RoleBadge role={Role.Admin} size="sm" />
+                              </div>
+                            </SelectItem>
+                          )}
+                          <SelectItem value={Role.Member}>
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4" />
+                                <span>Team Member</span>
+                              </div>
+                              <RoleBadge role={Role.Member} size="sm" />
+                            </div>
+                          </SelectItem>
+                          <SelectItem value={Role.Client}>
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <Briefcase className="h-4 w-4" />
+                                <span>Client</span>
+                              </div>
+                              <RoleBadge role={Role.Client} size="sm" />
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="rounded-lg border p-3">
+                        <p className="text-sm text-muted-foreground">
+                          {field.value === Role.Admin ? 'Full access to manage team, projects, and settings.' :
+                           field.value === Role.Member ? 'Access to assigned projects and tasks.' :
+                           'Limited access to view assigned projects and communicate with team.'}
+                        </p>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
                <FormField
                 control={form.control}
