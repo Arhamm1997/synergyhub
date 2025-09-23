@@ -9,17 +9,17 @@ import { useAuthStore } from "@/store/auth-store";
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
-  
+
   // Get the user's first name for the greeting
   const firstName = user?.profile?.firstName || user?.name?.split(' ')[0] || 'User';
-  
+
   return (
     <div className="flex flex-col gap-4">
-       <div className="flex items-center justify-between">
-         <div>
-            <h1 className="text-2xl font-bold">Welcome Back, {firstName}!</h1>
-            <p className="text-muted-foreground">Here's a summary of your team's activity.</p>
-         </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Welcome Back, {firstName}!</h1>
+          <p className="text-muted-foreground">Here's a summary of your team's activity.</p>
+        </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <SummaryCards />

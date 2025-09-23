@@ -22,13 +22,13 @@ import { useChatStore } from "@/store/chat-store";
 import { useMemberStore } from "@/store/member-store";
 
 const departmentVariant: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
-    "Engineering": "default",
-    "Design": "secondary",
-    "Marketing": "outline",
-    "Sales": "destructive",
-    "Support": "default",
-    "HR": "secondary",
-    "Operations": "default",
+  "Engineering": "default",
+  "Design": "secondary",
+  "Marketing": "outline",
+  "Sales": "destructive",
+  "Support": "default",
+  "HR": "secondary",
+  "Operations": "default",
 };
 
 export default function MembersPage() {
@@ -63,52 +63,52 @@ export default function MembersPage() {
 
   return (
     <div className="flex flex-col gap-4">
-       <div className="flex items-center justify-between">
-         <div>
-            <h1 className="text-2xl font-bold">Team Members</h1>
-            <p className="text-muted-foreground">
-              Manage your team and their roles.
-              {quotas && (
-                <span className="ml-2">
-                  {members.length} of {quotas.total} members used
-                </span>
-              )}
-            </p>
-         </div>
-         <div className="flex items-center gap-2">
-           <InviteMemberDialog 
-             businessId={businessId || ''} 
-             onInviteSent={fetchMembers} 
-           />
-           <MemberDialog 
-             onSave={handleCreateMember} 
-             isOpen={isMemberDialogOpen && !editingMember} 
-             onOpenChange={setIsMemberDialogOpen}
-           >
-             <Button>
-               <PlusCircle className="mr-2 h-4 w-4" />
-               Add Member
-             </Button>
-           </MemberDialog>
-         </div>
-       </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Team Members</h1>
+          <p className="text-muted-foreground">
+            Manage your team and their roles.
+            {quotas && (
+              <span className="ml-2">
+                {members.length} of {quotas.total} members used
+              </span>
+            )}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <InviteMemberDialog
+            businessId={businessId || ''}
+            onInviteSent={fetchMembers}
+          />
+          <MemberDialog
+            onSave={handleCreateMember}
+            isOpen={isMemberDialogOpen && !editingMember}
+            onOpenChange={setIsMemberDialogOpen}
+          >
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Member
+            </Button>
+          </MemberDialog>
+        </div>
+      </div>
 
-       {businessId && <PendingInvitations 
-         businessId={businessId}
-         onInvitationUpdate={fetchMembers}
-       />}
+      {businessId && <PendingInvitations
+        businessId={businessId}
+        onInvitationUpdate={fetchMembers}
+      />}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {members.map((member) => (
           <Card key={member.id}>
             <CardHeader className="flex flex-col items-center text-center p-6">
-                <Avatar className="h-20 w-20 mb-4">
-                    <AvatarImage src={member.avatarUrl} alt={member.name} data-ai-hint={member.avatarHint} />
-                    <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
-                </Avatar>
-                <CardTitle>{member.name}</CardTitle>
-                <CardDescription>{member.role}</CardDescription>
-                <Badge variant={departmentVariant[member.department] || 'default'} className="mt-2">{member.department}</Badge>
+              <Avatar className="h-20 w-20 mb-4">
+                <AvatarImage src={member.avatarUrl} alt={member.name} data-ai-hint={member.avatarHint} />
+                <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
+              </Avatar>
+              <CardTitle>{member.name}</CardTitle>
+              <CardDescription>{member.role}</CardDescription>
+              <Badge variant={departmentVariant[member.department] || 'default'} className="mt-2">{member.department}</Badge>
             </CardHeader>
             <CardContent className="text-center text-sm text-muted-foreground space-y-1">
               <p>{member.email}</p>
@@ -124,10 +124,10 @@ export default function MembersPage() {
       </div>
       {editingMember && (
         <MemberDialog
-            member={editingMember}
-            onSave={(editedMember) => handleUpdateMember({ ...editingMember, ...editedMember })}
-            isOpen={isMemberDialogOpen && !!editingMember}
-            onOpenChange={onDialogClose}
+          member={editingMember}
+          onSave={(editedMember) => handleUpdateMember({ ...editingMember, ...editedMember })}
+          isOpen={isMemberDialogOpen && !!editingMember}
+          onOpenChange={onDialogClose}
         />
       )}
     </div>

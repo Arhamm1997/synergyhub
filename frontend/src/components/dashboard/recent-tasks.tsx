@@ -38,7 +38,7 @@ const priorityVariant: { [key in Task["priority"]]: "destructive" | "secondary" 
 
 export function RecentTasks() {
   const { tasks, isLoading, error, fetchTasks } = useTasksStore();
-  
+
   // Ensure tasks is always an array
   const safeTasks = Array.isArray(tasks) ? tasks : [];
 

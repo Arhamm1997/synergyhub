@@ -17,7 +17,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { user, refreshUser, isAuthenticated } = useAuthStore();
-  
+
   // Initialize user data if we don't have it but are authenticated
   useEffect(() => {
     if (isAuthenticated && !user) {

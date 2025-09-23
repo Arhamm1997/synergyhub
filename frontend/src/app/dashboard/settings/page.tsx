@@ -35,7 +35,7 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                 <div className="space-y-2">
+                <div className="space-y-2">
                   <Label htmlFor="name">Name</Label>
                   <Input id="name" defaultValue={user?.name || ''} />
                 </div>
@@ -43,7 +43,7 @@ export default function SettingsPage() {
                   <Label htmlFor="email">Email</Label>
                   <Input id="email" type="email" defaultValue={user?.email || ''} />
                 </div>
-                 <div className="space-y-2">
+                <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
                   <Input id="role" defaultValue={user?.role || 'Member'} disabled />
                 </div>
@@ -62,16 +62,16 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                 <div className="space-y-2">
+                <div className="space-y-2">
                   <Label htmlFor="workspace-name">Workspace Name</Label>
                   <Input id="workspace-name" defaultValue="SynergyHub Demo" />
                 </div>
-                 <div className="space-y-2">
+                <div className="space-y-2">
                   <Label htmlFor="subdomain">Subdomain</Label>
                   <Input id="subdomain" defaultValue="demo.synergyhub.app" />
                 </div>
               </CardContent>
-               <CardContent>
+              <CardContent>
                 <Button>Save changes</Button>
               </CardContent>
             </Card>
@@ -97,13 +97,13 @@ export default function SettingsPage() {
                 <div className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <Label className="text-base">Push Notifications</Label>
-                     <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       Get push notifications on your devices.
                     </p>
                   </div>
                   <Switch defaultChecked />
                 </div>
-                 <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <Label className="text-base">Smart Prioritization</Label>
                     <p className="text-sm text-muted-foreground">

@@ -24,7 +24,7 @@ export const useContactsStore = create<ContactsState>((set) => ({
             // For now, get conversations from messages API
             const response = await api.get(API_ENDPOINTS.MESSAGES.CONVERSATIONS);
             const conversations = response.data.data || response.data || [];
-            
+
             // Transform conversations to contacts format
             const contacts = conversations.map((conv: any) => ({
                 id: conv._id || conv.id,
@@ -37,7 +37,7 @@ export const useContactsStore = create<ContactsState>((set) => ({
                 unread: conv.unreadCount || 0,
                 isGroup: conv.participants?.length > 2
             }));
-            
+
             set({ contacts, isLoading: false });
         } catch (error) {
             set({ error: (error as Error).message, isLoading: false });
