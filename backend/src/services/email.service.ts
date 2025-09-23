@@ -26,6 +26,16 @@ export const sendEmail = async ({
   html
 }: SendEmailParams) => {
   try {
+    // Skip email sending in development if SMTP credentials are not properly configured
+    if (config.nodeEnv === 'development' &&
+      (config.smtp.user === 'your-email@gmail.com' || !config.smtp.user || !config.smtp.pass)) {
+      console.log('📧 Email sending skipped in development (SMTP not configured)');
+      console.log(`To: ${to}`);
+      console.log(`Subject: ${subject}`);
+      console.log(`Content: ${text || html}`);
+      return { messageId: 'dev-mode-skipped' };
+    }
+
     const info = await transporter.sendMail({
       from: `"SynergyHub" <${config.smtp.user}>`,
       to,
@@ -37,6 +47,11 @@ export const sendEmail = async ({
     return info;
   } catch (error) {
     console.error('Error sending email:', error);
+    // In development, don't fail the request if email fails
+    if (config.nodeEnv === 'development') {
+      console.log('📧 Email sending failed in development mode - continuing anyway');
+      return { messageId: 'dev-mode-failed' };
+    }
     throw error;
   }
 };
@@ -71,10 +86,10 @@ export const sendInvitationEmail = async (
   businessName?: string,
   inviterName?: string
 ) => {
-  const subject = businessName 
+  const subject = businessName
     ? `Invitation to join ${businessName} as ${role} on SynergyHub`
     : `Invitation to join SynergyHub as ${role}`;
-  
+
   // Role-specific access descriptions
   const accessDescriptions = {
     Admin: [
@@ -179,4 +194,150 @@ export const sendInvitationEmail = async (
   `;
 
   return sendEmail({ to, subject, html });
+};
+
+interface WelcomeEmailParams {
+  to: string;
+  name: string;
+  businessName?: string;
+}
+
+export const sendWelcomeEmail = async ({ to, name, businessName }: WelcomeEmailParams) => {
+  const subject = 'Welcome to SynergyHub!';
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Welcome to SynergyHub</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; }
+        .button {
+          display: inline-block;
+          padding: 12px 24px;
+          background-color: #007bff;
+          color: white;
+          text-decoration: none;
+          border-radius: 6px;
+          margin: 20px 0;
+        }
+        .footer { color: #666; font-size: 14px; margin-top: 30px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Welcome to SynergyHub!</h1>
+          <p>Your account has been successfully created</p>
+        </div>
+        
+        <p>Hello ${name},</p>
+        <p>Welcome to SynergyHub! Your account has been successfully created${businessName ? ` and you've been added to ${businessName}` : ''}.</p>
+        
+        <p>You can now start collaborating with your team, managing projects, and tracking tasks efficiently.</p>
+        
+        <div style="text-align: center;">
+          <a href="${process.env.FRONTEND_URL}/dashboard" class="button">
+            Go to Dashboard
+          </a>
+        </div>
+
+        <div class="footer">
+          <p>If you have any questions, please contact support@synergyhub.com</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p>Best regards,<br>SynergyHub Team</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({ to, subject, html });
+};
+
+interface PasswordResetEmailParams {
+  to: string;
+  name: string;
+  resetUrl: string;
+}
+
+export const sendPasswordResetEmail = async ({ to, name, resetUrl }: PasswordResetEmailParams) => {
+  const subject = 'Reset your SynergyHub password';
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Reset your password</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .button {
+          display: inline-block;
+          padding: 12px 24px;
+          background-color: #dc3545;
+          color: white;
+          text-decoration: none;
+          border-radius: 6px;
+          margin: 20px 0;
+        }
+        .warning { 
+          background-color: #fff3cd;
+          border: 1px solid #ffeaa7;
+          padding: 15px;
+          border-radius: 8px;
+          margin: 20px 0;
+        }
+        .footer { color: #666; font-size: 14px; margin-top: 30px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h2>Reset Your Password</h2>
+        </div>
+        
+        <p>Hello ${name},</p>
+        <p>We received a request to reset your SynergyHub password. If you made this request, click the button below to reset your password:</p>
+        
+        <div style="text-align: center;">
+          <a href="${resetUrl}" class="button">
+            Reset Password
+          </a>
+        </div>
+
+        <div class="warning">
+          <strong>Security Notice:</strong>
+          <ul>
+            <li>This link will expire in 1 hour for security purposes</li>
+            <li>If you didn't request this reset, please ignore this email</li>
+            <li>Never share this link with anyone</li>
+          </ul>
+        </div>
+
+        <div class="footer">
+          <p>If you're having trouble clicking the button, copy and paste this URL into your browser:</p>
+          <p style="word-break: break-all;">${resetUrl}</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p>Best regards,<br>SynergyHub Team</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({ to, subject, html });
+};
+
+// Export as emailService object
+export const emailService = {
+  sendEmail,
+  sendInvitationEmail,
+  sendWelcomeEmail,
+  sendPasswordResetEmail
 };

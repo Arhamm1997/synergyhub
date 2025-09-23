@@ -1,6 +1,5 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/auth.middleware';
-import { validateRequest } from '../middleware/validate-request';
+import { authenticate } from '../middleware/auth.middleware';
 import { authController } from '../controllers/auth.controller';
 
 const router = express.Router();
@@ -8,14 +7,14 @@ const router = express.Router();
 // Admin request processing
 router.post(
   '/admin-requests/:requestId',
-  authMiddleware,
+  authenticate,
   authController.processAdminRequest
 );
 
 // Get admin requests
 router.get(
   '/admin-requests',
-  authMiddleware,
+  authenticate,
   authController.getAdminRequests
 );
 

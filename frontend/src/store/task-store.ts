@@ -24,7 +24,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   updateTask: (taskId, updates) => {
     set(state => ({
-      tasks: state.tasks.map(task => 
+      tasks: state.tasks.map(task =>
         task.id === taskId ? { ...task, ...updates } : task
       )
     }));

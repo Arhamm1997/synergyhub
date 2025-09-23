@@ -1,64 +1,83 @@
 import { Router } from 'express';
-import { BusinessController } from '../controllers/business.controller';
-import { authenticate } from '../middleware/auth.middleware';
+import { businessController } from '../controllers/business.controller';
 import { validate } from '../middleware/validation.middleware';
 import { businessValidation } from '../validations/business.validation';
+import { auth } from '../middleware/auth';
+import { requireRole } from '../middleware/role-auth';
+import { Role } from '../types/enums';
 
 const router = Router();
-const controller = new BusinessController();
+
+router.use(auth); // All routes require authentication
 
 // Create a new business
 router.post(
   '/',
-  authenticate,
-  validate(businessValidation.createBusiness),
-  controller.createBusiness
+  validate({
+    body: businessValidation.createBusiness.body
+  }),
+  businessController.createBusiness
 );
 
-// Get all businesses
-router.get('/', authenticate, controller.getAllBusinesses);
+// Get all businesses for current user
+router.get('/', businessController.getBusinesses);
 
-// More specific routes FIRST (before generic /:businessId)
-router.get('/:businessId/member-quotas',
-  authenticate,
-  (req, res, next) => {
-    // Log the request for debugging
-    console.log('Member quotas request:', {
-      businessId: req.params.businessId,
-      user: req.user?._id
-    });
-    next();
-  },
-  controller.getMemberQuotas
+// Get member quotas for a business (must come before generic /:businessId)
+router.get(
+  '/:businessId/quotas',
+  validate({
+    params: businessValidation.getBusiness.params
+  }),
+  businessController.getMemberQuotas
 );
 
-// Generic routes AFTER specific ones
-router.get('/:businessId', authenticate, controller.getBusinessById);
+// Get business analytics
+router.get(
+  '/:id/analytics',
+  businessController.getBusinessAnalytics
+);
 
-// Update business
-router.put(
+// Get a specific business
+router.get(
+  '/:businessId',
+  validate({
+    params: businessValidation.getBusiness.params
+  }),
+  businessController.getBusiness
+);
+
+// Update a business
+router.patch(
   '/:id',
-  authenticate,
-  validate(businessValidation.updateBusiness),
-  controller.updateBusiness
+  validate({
+    body: businessValidation.updateBusiness.body
+  }),
+  businessController.updateBusiness
 );
 
-// Delete business
-router.delete('/:id', authenticate, controller.deleteBusiness);
-
-// Add member to business
+// Invite member to business
 router.post(
-  '/:id/members',
-  authenticate,
-  validate(businessValidation.addMember),
-  controller.addMember
+  '/:id/invite',
+  businessController.inviteMember
+);
+
+// Update member role
+router.patch(
+  '/:id/members/:memberId/role',
+  businessController.updateMemberRole
 );
 
 // Remove member from business
 router.delete(
   '/:id/members/:memberId',
-  authenticate,
-  controller.removeMember
+  businessController.removeMember
+);
+
+// Delete a business
+router.delete(
+  '/:id',
+  requireRole([Role.SuperAdmin]),
+  businessController.deleteBusiness
 );
 
 export default router;

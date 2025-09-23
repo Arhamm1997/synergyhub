@@ -30,9 +30,9 @@ export function RoleBadge({ role, className, size = "md" }: RoleBadgeProps) {
         className
       )}
     >
-      {role === Role.Admin ? "Administrator" : 
-       role === Role.SuperAdmin ? "Super Admin" :
-       role === Role.Client ? "Client" : "Team Member"}
+      {role === Role.Admin ? "Administrator" :
+        role === Role.SuperAdmin ? "Super Admin" :
+          role === Role.Client ? "Client" : "Team Member"}
     </span>
   );
 }

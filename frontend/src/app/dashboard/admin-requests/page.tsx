@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { 
-  Check, 
+import {
+  Check,
   X,
   UserPlus,
   Clock,

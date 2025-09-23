@@ -11,13 +11,18 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || 'your-jwt-secret',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  uploadDir: process.env.UPLOAD_DIR || 'uploads',
   maxFileSize: process.env.MAX_FILE_SIZE ? parseInt(process.env.MAX_FILE_SIZE, 10) : 5242880, // 5MB
   smtp: {
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587,
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || ''
+  },
+  aws: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+    region: process.env.AWS_REGION || 'us-east-1',
+    bucketName: process.env.AWS_BUCKET_NAME || ''
   },
   geminiApiKey: process.env.GEMINI_API_KEY || '',
   rateLimitWindow: process.env.RATE_LIMIT_WINDOW ? parseInt(process.env.RATE_LIMIT_WINDOW, 10) : 15,

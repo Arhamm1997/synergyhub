@@ -1,48 +1,20 @@
 import { Router } from 'express';
 import multer from 'multer';
-import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { authenticate } from '../middleware/auth.middleware';
-import { AppError } from '../middleware/error-handler';
+import { AppError } from '../utils/errors';
 import { config } from '../config';
+import { UploadService } from '../services/upload.service';
+import { User } from '../models/user.model';
+import path from 'path';
 
 const router = Router();
+const uploadService = new UploadService();
 
-// Configure storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, config.uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
-  }
-});
-
-// File filter
-const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  // Accept images, documents, and PDFs
-  const allowedMimeTypes = [
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  ];
-
-  if (allowedMimeTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Invalid file type'));
-  }
-};
-
+// Memory storage for temporary file handling
+const storage = multer.memoryStorage();
 const upload = multer({
   storage,
-  fileFilter,
   limits: {
     fileSize: config.maxFileSize // 5MB
   }
@@ -51,32 +23,80 @@ const upload = multer({
 // Apply authentication to all routes
 router.use(authenticate);
 
-// Upload avatar
-router.post('/avatar', upload.single('avatar'), (req, res) => {
-  if (!req.file) {
-    throw new AppError(400, 'No file uploaded');
+// Get pre-signed URL for avatar upload
+router.get('/avatar/signed-url', authenticate, async (req, res) => {
+  const fileExtension = req.query.fileType?.toString().split('/')[1];
+  if (!fileExtension) {
+    throw new AppError('File type is required', 400);
   }
+
+  const key = `avatars/${req.user.id}/${uuidv4()}.${fileExtension}`;
+  const contentType = req.query.fileType?.toString();
+
+  if (!uploadService.validateFileType(contentType)) {
+    throw new AppError('Invalid file type', 400);
+  }
+
+  const signedUrl = await uploadService.getSignedUploadUrl(key, contentType);
 
   res.json({
     success: true,
     data: {
-      filename: req.file.filename,
-      path: `/uploads/${req.file.filename}`
+      signedUrl,
+      key,
+      publicUrl: uploadService.getPublicUrl(key)
     }
   });
 });
 
-// Upload multiple files
-router.post('/files', upload.array('files', 10), (req, res) => {
-  if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
-    throw new AppError(400, 'No files uploaded');
+// Update user's avatar URL
+router.post('/avatar/confirm', authenticate, async (req, res) => {
+  const { key } = req.body;
+
+  if (!key) {
+    throw new AppError('File key is required', 400);
   }
 
-  const files = (req.files as Express.Multer.File[]).map(file => ({
-    filename: file.filename,
-    path: `/uploads/${file.filename}`,
-    mimetype: file.mimetype,
-    size: file.size
+  // Update user's avatar URL
+  const user = await User.findByIdAndUpdate(
+    req.user.id,
+    {
+      avatarUrl: uploadService.getPublicUrl(key),
+      avatarHint: 'User profile picture'
+    },
+    { new: true }
+  );
+
+  res.json({
+    success: true,
+    data: {
+      avatarUrl: user.avatarUrl
+    }
+  });
+});
+
+// Upload file directly
+router.post('/files', authenticate, upload.array('files', 10), async (req, res) => {
+  if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+    throw new AppError('No files uploaded', 400);
+  }
+
+  const files = await Promise.all((req.files as Express.Multer.File[]).map(async file => {
+    const key = `files/${req.user.id}/${uuidv4()}${path.extname(file.originalname)}`;
+
+    if (!uploadService.validateFileType(file.mimetype)) {
+      throw new AppError(`Invalid file type: ${file.mimetype}`, 400);
+    }
+
+    const url = await uploadService.uploadFile(key, file.buffer, file.mimetype);
+
+    return {
+      filename: file.originalname,
+      key,
+      url,
+      mimetype: file.mimetype,
+      size: file.size
+    };
   }));
 
   res.json({
@@ -85,4 +105,4 @@ router.post('/files', upload.array('files', 10), (req, res) => {
   });
 });
 
-export default router;
+export { router };

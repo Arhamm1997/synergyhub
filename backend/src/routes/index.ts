@@ -6,10 +6,11 @@ import clientRoutes from './client.routes';
 import businessRoutes from './business.routes';
 import messageRoutes from './message.routes';
 import notificationRoutes from './notification.routes';
-import uploadRoutes from './upload.routes';
+import { router as uploadRoutes } from './upload.routes';
 import invitationRoutes from './invitation.routes';
 import quotasRoutes from './quotas.routes';
 import healthRoutes from './health.routes';
+import memberRoutes from './member.routes';
 
 export const setupRoutes = (app: Express) => {
   // API Routes
@@ -23,6 +24,7 @@ export const setupRoutes = (app: Express) => {
   app.use('/api/upload', uploadRoutes);
   app.use('/api/invitations', invitationRoutes);
   app.use('/api/quotas', quotasRoutes);
+  app.use('/api/members', memberRoutes);
 
   // Health check
   app.use('/health', healthRoutes);

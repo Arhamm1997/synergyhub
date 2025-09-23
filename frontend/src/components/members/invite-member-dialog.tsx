@@ -152,7 +152,55 @@ export function InviteMemberDialog({ businessId, onInviteSent, currentUserRole }
             Send an invitation email to add a new team member to your business.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="space-y-6 py-4">
+          {/* Role Selection at the top */}
+          <div className="space-y-2">
+            <Label htmlFor="role" className="text-base font-semibold">Select Role *</Label>
+            <Select
+              value={memberData.role}
+              onValueChange={(value: string) => setMemberData({ ...memberData, role: value as Role })}
+            >
+              <SelectTrigger className="h-12">
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                {(currentUserRole === Role.SuperAdmin || currentUserRole === Role.Admin) && (
+                  <SelectItem value={Role.Admin}>Administrator</SelectItem>
+                )}
+                <SelectItem value={Role.Member}>Team Member</SelectItem>
+                <SelectItem value={Role.Client}>Client</SelectItem>
+              </SelectContent>
+            </Select>
+            {quotas && (
+              <div className="mt-2 flex gap-4">
+                {memberData.role === Role.Admin && (
+                  <div className="rounded-md bg-purple-50 px-3 py-2 text-sm text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                    Admin slots: {quotas.currentAdmins}/{quotas.maxAdmins}
+                  </div>
+                )}
+                {memberData.role === Role.Member && (
+                  <div className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                    Member slots: {quotas.currentMembers}/{quotas.maxMembers}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Role description */}
+          <div className="rounded-lg border p-4">
+            <h4 className="mb-2 font-medium">
+              {memberData.role === Role.Admin ? 'Administrator Access' :
+                memberData.role === Role.Member ? 'Team Member Access' :
+                  'Client Access'}
+            </h4>
+            <p className="text-sm text-muted-foreground">
+              {memberData.role === Role.Admin ? 'Full access to manage team, projects, and settings.' :
+                memberData.role === Role.Member ? 'Access to assigned projects and tasks.' :
+                  'Limited access to view assigned projects and communicate with team.'}
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email *</Label>
@@ -175,34 +223,6 @@ export function InviteMemberDialog({ businessId, onInviteSent, currentUserRole }
                 onChange={(e) => setMemberData({ ...memberData, name: e.target.value })}
                 required
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="role">Role *</Label>
-              <Select
-                value={memberData.role}
-                onValueChange={(value: string) => setMemberData({ ...memberData, role: value as Role })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {currentUserRole === Role.SuperAdmin && (
-                    <SelectItem value={Role.Admin}>Admin</SelectItem>
-                  )}
-                  <SelectItem value={Role.Member}>Member</SelectItem>
-                  <SelectItem value={Role.Client}>Client</SelectItem>
-                </SelectContent>
-              </Select>
-              {quotas && (
-                <div className="text-sm text-gray-500">
-                  {memberData.role === Role.Admin && (
-                    <p>Admin slots: {quotas.currentAdmins}/{quotas.maxAdmins}</p>
-                  )}
-                  {memberData.role === Role.Member && (
-                    <p>Member slots: {quotas.currentMembers}/{quotas.maxMembers}</p>
-                  )}
-                </div>
-              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="department">Department *</Label>

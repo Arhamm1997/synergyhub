@@ -12,12 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserCircle, Building2, Calendar } from "lucide-react";
@@ -130,7 +130,7 @@ export function MembersList() {
                     {member.details?.title || "—"}
                   </TableCell>
                   <TableCell>
-                    <Badge 
+                    <Badge
                       variant={member.status === "Online" ? "success" : "secondary"}
                       className="capitalize"
                     >
@@ -140,7 +140,7 @@ export function MembersList() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      {member.lastActive 
+                      {member.lastActive
                         ? format(member.lastActive, "MMM d, yyyy")
                         : "Never"
                       }

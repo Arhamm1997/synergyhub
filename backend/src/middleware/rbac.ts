@@ -1,40 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { Permission, Role } from '../types/enums';
-import { Business, IBusiness } from '../models/business.model';
-import { Types } from 'mongoose';
+import { Permission, Role, DEFAULT_ROLE_PERMISSIONS } from '../types/enums';
+import { Business } from '../models/business.model';
 
-interface BusinessMember {
-  user: Types.ObjectId;
-  role: Role;
-  addedAt: Date;
-}
-
-// Define role permissions
-const rolePermissions = {
-  [Role.SuperAdmin]: Object.values(Permission),
-  [Role.Admin]: [
-    Permission.ManageMembers,
-    Permission.ManageClients,
-    Permission.ManageProjects,
-    Permission.ManageTasks,
-    Permission.EditTasks,
-    Permission.ViewTasks,
-    Permission.ManageMessages,
-    Permission.SendMessages,
-    Permission.UploadFiles
-  ],
-  [Role.Member]: [
-    Permission.EditTasks,
-    Permission.ViewTasks,
-    Permission.SendMessages,
-    Permission.UploadFiles
-  ],
-  [Role.Client]: [
-    Permission.ViewTasks,
-    Permission.SendMessages,
-    Permission.UploadFiles
-  ]
-};
+// Use the pre-defined role permissions
+const rolePermissions = DEFAULT_ROLE_PERMISSIONS;
 
 // Check if user has required permissions
 export const hasPermission = (requiredPermissions: Permission[]) => {
@@ -73,7 +42,7 @@ export const hasPermission = (requiredPermissions: Permission[]) => {
       // Add permissions to request for use in controllers
       req.userPermissions = userPermissions;
       req.userRole = memberRecord.role;
-      
+
       next();
     } catch (error) {
       next(error);
@@ -128,6 +97,7 @@ export const canManageRole = (targetRole: Role) => {
 
 // Extend Express Request type
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       userPermissions?: Permission[];

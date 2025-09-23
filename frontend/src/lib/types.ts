@@ -90,7 +90,7 @@ export interface Assignee {
 
 export interface Contact {
   id: string;
-  name:string;
+  name: string;
   avatarUrl?: string;
   avatarHint?: string;
   isGroup?: boolean;
@@ -109,6 +109,32 @@ export interface Task {
   priority: Priority;
   status: TaskStatus;
   dueDate: string;
+}
+
+// Task operation types
+export interface CreateTaskData {
+  title: string;
+  description?: string;
+  projectId?: string;
+  businessId?: string;
+  assigneeId?: string;
+  priority?: Priority;
+  status?: TaskStatus;
+  dueDate?: string;
+  estimatedHours?: number;
+  tags?: string[];
+}
+
+export interface UpdateTaskData {
+  title?: string;
+  description?: string;
+  assigneeId?: string;
+  priority?: Priority;
+  status?: TaskStatus;
+  dueDate?: string;
+  estimatedHours?: number;
+  tags?: string[];
+  progress?: number;
 }
 
 export interface Project {
@@ -180,22 +206,38 @@ export interface AdminAuditLog {
   timestamp: Date;
 }
 
+export interface BusinessMember {
+  user: User;
+  role: Role;
+  addedAt: Date;
+}
+
+export interface BusinessMemberCounts {
+  superAdmin: number;
+  admin: number;
+  member: number;
+  client: number;
+}
+
 export interface Business {
   id: string;
   name: string;
-  owner: Assignee;
-  phone: string;
-  type: string;
+  description: string;
+  owner: User;
+  members: BusinessMember[];
+  memberCounts: BusinessMemberCounts;
+  phone?: string;
+  type?: string;
   status: 'Active' | 'Inactive' | 'Lead';
-  notes: string;
-  quotas: BusinessQuotas;
-  members: Member[];
-  admins: AdminUser[];
+  notes?: string;
+  createdBy: User;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 
 export interface TaskEvent extends Event {
-    resource: Task;
+  resource: Task;
 }
 
 export interface CalendarEvent {

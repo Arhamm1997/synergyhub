@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { InvitationController } from '../controllers/invitation.controller';
-import { auth } from '../middleware/auth';
+import { authenticate } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validation.middleware';
 import { invitationValidation } from '../validations/invitation.validation';
 import { requireRole, validateRoleManagement } from '../middleware/role-auth';
@@ -8,8 +8,16 @@ import { Role } from '../types/enums';
 
 const router = Router();
 
+// Public routes (no authentication required)
+// Validate invitation (public route) - MUST be before authenticate middleware
+router.get(
+  '/validate',
+  validate(invitationValidation.validateInvitation),
+  InvitationController.validateInvitation
+);
+
 // Protected routes (require authentication)
-router.use(auth);
+router.use(authenticate);
 
 // Send invitation - only SuperAdmin can invite admins, both SuperAdmin and Admin can invite members
 router.post(
@@ -46,11 +54,11 @@ router.get(
   InvitationController.getBusinessInvitations
 );
 
-// Validate invitation (public route)
+// Get all invitations for current user's business
 router.get(
-  '/validate',
-  validate(invitationValidation.validateInvitation),
-  InvitationController.validateInvitation
+  '/',
+  requireRole([Role.SuperAdmin, Role.Admin]),
+  InvitationController.getBusinessInvitations
 );
 
 export default router;

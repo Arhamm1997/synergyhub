@@ -108,10 +108,10 @@ export default function ProjectDetailsPage({ params }: Props) {
                 </div>
 
                 <div className="lg:col-span-2">
-                    <ProjectTaskView 
-                        initialTasks={project.tasks} 
-                        title="Project Tasks" 
-                        projectId={project.id} 
+                    <ProjectTaskView
+                        initialTasks={project.tasks}
+                        title="Project Tasks"
+                        projectId={project.id}
                     />
                 </div>
             </div>

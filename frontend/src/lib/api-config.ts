@@ -10,44 +10,77 @@ export const API_ENDPOINTS = {
     LOGIN: '/auth/login',
     LOGOUT: '/auth/logout',
     ME: '/auth/me',
+    VERIFY_EMAIL: '/auth/verify-email',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
     ADMIN_REQUESTS: '/auth/admin-requests',
+  },
+  // Users
+  USERS: {
+    BASE: '/users',
+    BY_ID: (id: string) => `/users/${id}`,
+    PROFILE: '/users/profile',
+  },
+  // Businesses
+  BUSINESSES: {
+    BASE: '/businesses',
+    BY_ID: (id: string) => `/businesses/${id}`,
+    MEMBERS: (id: string) => `/businesses/${id}/members`,
+    ANALYTICS: (id: string) => `/businesses/${id}/analytics`,
+    INVITE: (id: string) => `/businesses/${id}/invite`,
   },
   // Projects
   PROJECTS: {
     BASE: '/projects',
     BY_ID: (id: string) => `/projects/${id}`,
     TASKS: (id: string) => `/projects/${id}/tasks`,
+    ANALYTICS: (id: string) => `/projects/${id}/analytics`,
   },
   // Tasks
   TASKS: {
     BASE: '/tasks',
     BY_ID: (id: string) => `/tasks/${id}`,
+    COMMENTS: (id: string) => `/tasks/${id}/comments`,
+    TIME_LOGS: (id: string) => `/tasks/${id}/time-logs`,
   },
   // Clients
   CLIENTS: {
     BASE: '/clients',
     BY_ID: (id: string) => `/clients/${id}`,
   },
-  // Business
-  BUSINESS: {
-    BASE: '/businesses',
-    BY_ID: (id: string) => `/businesses/${id}`,
+  // Members
+  MEMBERS: {
+    BASE: '/members',
+    BY_ID: (id: string) => `/members/${id}`,
+    QUOTAS: '/members/quotas',
+    INVITE: '/members/invite',
   },
   // Messages
   MESSAGES: {
     BASE: '/messages',
     BY_ID: (id: string) => `/messages/${id}`,
+    CONVERSATIONS: '/messages/conversations',
   },
   // Notifications
   NOTIFICATIONS: {
     BASE: '/notifications',
     BY_ID: (id: string) => `/notifications/${id}`,
+    MARK_READ: '/notifications/mark-read',
+    PREFERENCES: '/notifications/preferences',
+  },
+  // Invitations
+  INVITATIONS: {
+    BASE: '/invitations',
+    VALIDATE: '/invitations/validate',
+    BY_TOKEN: (token: string) => `/invitations/${token}`,
   },
   // Upload
   UPLOAD: {
     AVATAR: '/upload/avatar',
     FILES: '/upload/files',
   },
+  // Health
+  HEALTH: '/health',
 };
 
 // Create axios instance with default config
@@ -62,7 +95,7 @@ export const api = axios.create({
 // Request interceptor for API calls
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -81,14 +114,15 @@ api.interceptors.response.use(
 
     // If the error status is 401 and there is no originalRequest._retry flag,
     // it means the token has expired and we need to refresh it
-    if (error.response.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      try {
-        // Refresh token logic could be implemented here
-        return api(originalRequest);
-      } catch (err) {
-        return Promise.reject(err);
+      // Clear invalid token
+      localStorage.removeItem('authToken');
+
+      // Redirect to login page
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
       }
     }
 

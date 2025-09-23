@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useAuthStore } from "@/store/auth-store"
 
 export default function SettingsPage() {
+  const { user } = useAuthStore();
   return (
     <Card>
       <CardHeader>
@@ -35,15 +37,15 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                  <div className="space-y-2">
                   <Label htmlFor="name">Name</Label>
-                  <Input id="name" defaultValue="Alex Moran" />
+                  <Input id="name" defaultValue={user?.name || ''} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" defaultValue="alex.moran@example.com" />
+                  <Input id="email" type="email" defaultValue={user?.email || ''} />
                 </div>
                  <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
-                  <Input id="role" defaultValue="Team Lead" disabled />
+                  <Input id="role" defaultValue={user?.role || 'Member'} disabled />
                 </div>
               </CardContent>
               <CardContent>

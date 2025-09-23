@@ -1,4 +1,8 @@
 
+"use client";
+
+import { useEffect } from 'react';
+import { useAuthStore } from '@/store/auth-store';
 import {
   SidebarProvider,
   Sidebar,
@@ -12,6 +16,14 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { user, refreshUser, isAuthenticated } = useAuthStore();
+  
+  // Initialize user data if we don't have it but are authenticated
+  useEffect(() => {
+    if (isAuthenticated && !user) {
+      refreshUser();
+    }
+  }, [isAuthenticated, user, refreshUser]);
   return (
     <SidebarProvider>
       <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">

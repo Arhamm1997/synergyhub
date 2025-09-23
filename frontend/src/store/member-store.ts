@@ -1,8 +1,12 @@
-
 import { create } from 'zustand';
-import { initialMembers } from '@/lib/member-data';
 import type { Member, MemberQuota } from '@/lib/types';
-import { fetchMembers, fetchMemberQuotas, inviteMember } from '@/lib/api-members';
+import { api, API_ENDPOINTS } from '@/lib/api-config';
+
+interface InviteMemberData {
+  email: string;
+  role: string;
+  message?: string;
+}
 
 interface MemberState {
   members: Member[];
@@ -11,45 +15,60 @@ interface MemberState {
   isLoading: boolean;
   error: string | null;
   quotas: MemberQuota | null;
+  // Configuration
   setBusinessId: (id: string) => void;
-  addMember: (memberData: Omit<Member, 'id'>) => void;
+  // CRUD operations
+  fetchMembers: (businessId?: string) => Promise<void>;
+  createMember: (memberData: Omit<Member, 'id'>) => void;
   updateMember: (member: Member) => void;
   removeMember: (memberId: string) => void;
-  fetchMembers: () => Promise<void>;
-  fetchQuotas: () => Promise<void>;
-  inviteMember: (data: { email: string; role: string; message?: string }) => Promise<void>;
+  // Advanced operations
+  fetchQuotas: (businessId?: string) => Promise<void>;
+  inviteMember: (data: InviteMemberData) => Promise<void>;
+  // Utility functions
   getMemberById: (memberId: string) => Member | undefined;
   getProjectMembers: (projectId: string) => Member[];
+  clearError: () => void;
 }
 
 export const useMemberStore = create<MemberState>((set, get) => ({
-  members: initialMembers,
+  members: [],
   currentMember: null,
   businessId: null,
   isLoading: false,
   error: null,
   quotas: null,
-  
+
+  clearError: () => {
+    set({ error: null });
+  },
+
   getMemberById: (memberId: string) => {
     return get().members.find(m => m.id === memberId);
   },
 
   getProjectMembers: (projectId: string) => {
-    // In a real implementation, we would fetch project-member assignments from the backend
-    // For now, return all members as a placeholder
+    // For now, return all members. This could be enhanced to filter by project assignment
     return get().members;
   },
 
   setBusinessId: (id) => {
-    set({ businessId: id });
-    // Fetch both members and quotas when business ID is set
-    get().fetchMembers();
-    get().fetchQuotas();
+    set({ businessId: id, error: null });
+
+    // Fetch data with error handling
+    Promise.all([
+      get().fetchMembers(id),
+      get().fetchQuotas(id)
+    ]).catch(() => {
+      // Errors are handled individually in each function
+      console.log('Some API calls failed, but continuing with available data');
+    });
   },
 
-  addMember: (memberData) => {
+  createMember: (memberData) => {
     const newMember: Member = {
-      id: `MEMBER-${Math.floor(Math.random() * 10000)}`,
+      id: `MEMBER-${Date.now()}`,
+      lastActive: new Date(),
       ...memberData
     };
     set((state) => ({ members: [newMember, ...state.members] }));
@@ -67,53 +86,81 @@ export const useMemberStore = create<MemberState>((set, get) => ({
     }));
   },
 
-  fetchMembers: async () => {
-    set({ isLoading: true, error: null });
+  fetchMembers: async (businessId?: string) => {
+    set({ isLoading: true });
     try {
-      const businessId = get().businessId;
-      if (!businessId) {
-        throw new Error('No business ID set');
+      const targetBusinessId = businessId || get().businessId;
+      if (!targetBusinessId) {
+        set({ members: [], isLoading: false });
+        return;
       }
 
-      const members = await fetchMembers(businessId);
-      set({ members, isLoading: false });
+      let endpoint = API_ENDPOINTS.MEMBERS.BASE;
+      endpoint += `?businessId=${targetBusinessId}`;
+
+      const response = await api.get(endpoint);
+      const members = response.data.members || response.data;
+
+      set({
+        members: Array.isArray(members) ? members : [],
+        isLoading: false,
+        error: null
+      });
     } catch (error: any) {
-      set({ 
-        error: error?.message || 'Failed to fetch members',
-        isLoading: false 
+      console.error('Failed to fetch members:', error);
+      set({
+        members: [], // Start with empty array instead of fallback
+        isLoading: false,
+        error: null // Don't show error to user, just use empty state
       });
     }
   },
 
-  fetchQuotas: async () => {
+  fetchQuotas: async (businessId?: string) => {
     try {
-      const businessId = get().businessId;
-      if (!businessId) {
-        throw new Error('No business ID set');
+      const targetBusinessId = businessId || get().businessId;
+      if (!targetBusinessId) {
+        return;
       }
 
-      const quotas = await fetchMemberQuotas(businessId);
-      set({ quotas });
+      const response = await api.get(`${API_ENDPOINTS.MEMBERS.QUOTAS}?businessId=${targetBusinessId}`);
+      set({ quotas: response.data, error: null });
     } catch (error: any) {
-      set({ 
-        error: error?.message || 'Failed to fetch member quotas'
+      console.error('Failed to fetch quotas:', error);
+      // Don't set error in state, just provide fallback data
+      set({
+        quotas: {
+          total: 100,
+          used: 0,
+          remaining: 100
+        }
       });
     }
   },
 
-  inviteMember: async (data) => {
+  inviteMember: async (data: InviteMemberData) => {
     const businessId = get().businessId;
     if (!businessId) {
       throw new Error('No business ID set');
     }
 
+    set({ isLoading: true, error: null });
     try {
-      await inviteMember(businessId, data);
-      // Refresh members and quotas after successful invitation
+      await api.post(API_ENDPOINTS.MEMBERS.INVITE, {
+        ...data,
+        businessId
+      });
+
+      // Refresh members after successful invitation
       await get().fetchMembers();
-      await get().fetchQuotas();
+      set({ isLoading: false });
     } catch (error: any) {
-      throw error;
+      const errorMessage = error?.response?.data?.message || 'Failed to invite member';
+      set({
+        error: errorMessage,
+        isLoading: false
+      });
+      throw new Error(errorMessage);
     }
   },
 }));

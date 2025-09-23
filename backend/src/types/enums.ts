@@ -56,15 +56,55 @@ export enum Role {
   Client = 'Client'
 }
 
-export enum Permission {
+export enum TaskPermission {
+  ViewTask = 'view_task',
+  EditTask = 'edit_task',
+  DeleteTask = 'delete_task',
+  AssignTask = 'assign_task',
+  ReadComments = 'read_comments',
+  WriteComments = 'write_comments'
+}
+
+export enum AdminPermission {
   ManageAdmins = 'manage_admins',
   ManageMembers = 'manage_members',
-  ManageClients = 'manage_clients',
-  ManageProjects = 'manage_projects',
-  ManageTasks = 'manage_tasks',
-  EditTasks = 'edit_tasks',
-  ViewTasks = 'view_tasks',
-  ManageMessages = 'manage_messages',
-  SendMessages = 'send_messages',
-  UploadFiles = 'upload_files'
+  ManageRoles = 'manage_roles',
+  ManagePermissions = 'manage_permissions',
+  ViewAuditLogs = 'view_audit_logs'
+}
+
+export type Permission = TaskPermission | AdminPermission;
+
+export const DEFAULT_ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+  [Role.SuperAdmin]: [
+    TaskPermission.ViewTask,
+    TaskPermission.EditTask,
+    TaskPermission.DeleteTask,
+    TaskPermission.AssignTask,
+    TaskPermission.ReadComments,
+    TaskPermission.WriteComments,
+    AdminPermission.ManageAdmins,
+    AdminPermission.ManageMembers,
+    AdminPermission.ManageRoles,
+    AdminPermission.ManagePermissions,
+    AdminPermission.ViewAuditLogs
+  ],
+  [Role.Admin]: [
+    TaskPermission.ViewTask,
+    TaskPermission.EditTask,
+    TaskPermission.DeleteTask,
+    TaskPermission.AssignTask,
+    TaskPermission.ReadComments,
+    TaskPermission.WriteComments,
+    AdminPermission.ManageMembers,
+    AdminPermission.ViewAuditLogs
+  ],
+  [Role.Member]: [
+    TaskPermission.ViewTask,
+    TaskPermission.ReadComments,
+    TaskPermission.WriteComments
+  ],
+  [Role.Client]: [
+    TaskPermission.ViewTask
+  ]
 }

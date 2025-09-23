@@ -31,55 +31,55 @@ const priorityVariant: { [key in Task["priority"]]: "destructive" | "secondary" 
 };
 
 const CustomToolbar = (toolbar: ToolbarProps) => {
-    const goToBack = () => {
-        toolbar.onNavigate('PREV');
-    };
+  const goToBack = () => {
+    toolbar.onNavigate('PREV');
+  };
 
-    const goToNext = () => {
-        toolbar.onNavigate('NEXT');
-    };
+  const goToNext = () => {
+    toolbar.onNavigate('NEXT');
+  };
 
-    const goToCurrent = () => {
-        toolbar.onNavigate('TODAY');
-    };
+  const goToCurrent = () => {
+    toolbar.onNavigate('TODAY');
+  };
 
-    const label = () => {
-        const date = moment(toolbar.date);
-        return (
-            <span>
-                <span className="font-bold text-xl">{date.format('MMMM')}</span>
-                <span className="text-xl"> {date.format('YYYY')}</span>
-            </span>
-        );
-    };
-
+  const label = () => {
+    const date = moment(toolbar.date);
     return (
-        <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={goToCurrent}>Today</Button>
-                 <div className="flex items-center">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToBack}><ChevronLeft className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToNext}><ChevronRight className="h-4 w-4" /></Button>
-                 </div>
-            </div>
-            <div className="text-center">
-                {label()}
-            </div>
-             <div className="flex items-center gap-2">
-                {toolbar.views.map(view => (
-                     <Button 
-                        key={view}
-                        variant={toolbar.view === view ? 'default' : 'outline'} 
-                        size="sm"
-                        onClick={() => toolbar.onView(view as any)}
-                        className="capitalize"
-                    >
-                        {view}
-                    </Button>
-                ))}
-            </div>
-        </div>
+      <span>
+        <span className="font-bold text-xl">{date.format('MMMM')}</span>
+        <span className="text-xl"> {date.format('YYYY')}</span>
+      </span>
     );
+  };
+
+  return (
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={goToCurrent}>Today</Button>
+        <div className="flex items-center">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToBack}><ChevronLeft className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToNext}><ChevronRight className="h-4 w-4" /></Button>
+        </div>
+      </div>
+      <div className="text-center">
+        {label()}
+      </div>
+      <div className="flex items-center gap-2">
+        {toolbar.views.map(view => (
+          <Button
+            key={view}
+            variant={toolbar.view === view ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => toolbar.onView(view as any)}
+            className="capitalize"
+          >
+            {view}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 
@@ -118,16 +118,16 @@ export function TaskCalendarView({ tasks, onEventClick }: TaskCalendarViewProps)
   const [events, setEvents] = React.useState<any[]>([]);
   const [isEventDialogOpen, setIsEventDialogOpen] = React.useState(false);
   const [slotInfo, setSlotInfo] = React.useState<SlotInfo | null>(null);
-  
+
   React.useEffect(() => {
-     const taskEvents = tasks.map((task) => ({
-        ...task,
-        start: parseISO(task.dueDate),
-        end: parseISO(task.dueDate),
-        allDay: true,
-        isTask: true,
-        key: `${task.id}-${task.dueDate}` // Add a key that changes when the date changes
-      }));
+    const taskEvents = tasks.map((task) => ({
+      ...task,
+      start: parseISO(task.dueDate),
+      end: parseISO(task.dueDate),
+      allDay: true,
+      isTask: true,
+      key: `${task.id}-${task.dueDate}` // Add a key that changes when the date changes
+    }));
     setEvents(prev => [...taskEvents, ...prev.filter(e => !e.isTask)]);
   }, [tasks]);
 
@@ -138,18 +138,18 @@ export function TaskCalendarView({ tasks, onEventClick }: TaskCalendarViewProps)
 
   const handleCreateEvent = (event: Omit<CalendarEvent, 'id'>) => {
     const newEvent = {
-        id: `EVT-${Date.now()}`,
-        ...event,
-        isTask: false,
+      id: `EVT-${Date.now()}`,
+      ...event,
+      isTask: false,
     };
     setEvents(prev => [...prev, newEvent]);
   }
-  
+
   const handleEventClick = (event: any) => {
-      if (event.isTask) {
-          onEventClick(event);
-      }
-      // Can add logic here to open a detail view for non-task events as well
+    if (event.isTask) {
+      onEventClick(event);
+    }
+    // Can add logic here to open a detail view for non-task events as well
   }
 
 
@@ -161,29 +161,29 @@ export function TaskCalendarView({ tasks, onEventClick }: TaskCalendarViewProps)
 
   return (
     <>
-    <Card className="mt-4">
-      <CardContent className="p-2 md:p-4">
-        <div className="h-[70vh]">
-          <Calendar
-            key={key}
-            localizer={localizer}
-            events={events}
-            startAccessor="start"
-            endAccessor="end"
-            onSelectEvent={handleEventClick}
-            onSelectSlot={handleSelectSlot}
-            selectable
-            style={{ height: '100%' }}
-            views={['month', 'week', 'day']}
-            components={{
-              toolbar: CustomToolbar,
-              event: EventComponent
-            }}
-            eventPropGetter={(event) => {
-              if (event.isTask) {
+      <Card className="mt-4">
+        <CardContent className="p-2 md:p-4">
+          <div className="h-[70vh]">
+            <Calendar
+              key={key}
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              onSelectEvent={handleEventClick}
+              onSelectSlot={handleSelectSlot}
+              selectable
+              style={{ height: '100%' }}
+              views={['month', 'week', 'day']}
+              components={{
+                toolbar: CustomToolbar,
+                event: EventComponent
+              }}
+              eventPropGetter={(event) => {
+                if (event.isTask) {
                   const priority = event.priority;
                   let className = 'rounded-md p-0.5 border-l-4 cursor-pointer text-foreground ';
-                  if(priority === 'Urgent') {
+                  if (priority === 'Urgent') {
                     className += 'bg-red-500/10 border-red-500';
                   } else if (priority === 'High') {
                     className += 'bg-amber-500/10 border-amber-500';
@@ -192,26 +192,26 @@ export function TaskCalendarView({ tasks, onEventClick }: TaskCalendarViewProps)
                   } else {
                     className += 'bg-green-500/10 border-green-500';
                   }
-                  return {className};
-              }
-              // Default styling for non-task events
-              return {
-                className: 'rounded-md p-0.5 border-l-4 cursor-pointer text-foreground bg-indigo-500/10 border-indigo-500'
-              }
-            }}
-             formats={{
+                  return { className };
+                }
+                // Default styling for non-task events
+                return {
+                  className: 'rounded-md p-0.5 border-l-4 cursor-pointer text-foreground bg-indigo-500/10 border-indigo-500'
+                }
+              }}
+              formats={{
                 dayFormat: (date, culture, localizer) => localizer ? localizer.format(date, 'ddd D', culture) : '',
                 weekdayFormat: (date, culture, localizer) => localizer ? localizer.format(date, 'dddd', culture) : '',
                 monthHeaderFormat: (date, culture, localizer) => localizer ? localizer.format(date, 'MMMM YYYY', culture) : '',
                 dayHeaderFormat: (date, culture, localizer) => localizer ? localizer.format(date, 'dddd, MMMM Do', culture) : '',
-            }}
-             className="[&_.rbc-toolbar]:mb-4 [&_.rbc-header]:border-b-2 [&_.rbc-header]:p-2 [&_.rbc-header]:font-bold [&_.rbc-day-bg]:border-l [&_.rbc-month-view]:border-0 [&_.rbc-month-row]:border-t [&_.rbc-event]:bg-transparent [&_.rbc-event]:p-0"
-          />
-        </div>
-      </CardContent>
-    </Card>
-     <CreateEventDialog 
-        isOpen={isEventDialogOpen} 
+              }}
+              className="[&_.rbc-toolbar]:mb-4 [&_.rbc-header]:border-b-2 [&_.rbc-header]:p-2 [&_.rbc-header]:font-bold [&_.rbc-day-bg]:border-l [&_.rbc-month-view]:border-0 [&_.rbc-month-row]:border-t [&_.rbc-event]:bg-transparent [&_.rbc-event]:p-0"
+            />
+          </div>
+        </CardContent>
+      </Card>
+      <CreateEventDialog
+        isOpen={isEventDialogOpen}
         onOpenChange={setIsEventDialogOpen}
         onCreate={handleCreateEvent}
         slotInfo={slotInfo}
@@ -220,4 +220,3 @@ export function TaskCalendarView({ tasks, onEventClick }: TaskCalendarViewProps)
   );
 }
 
-    

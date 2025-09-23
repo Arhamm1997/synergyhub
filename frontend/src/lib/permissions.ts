@@ -50,12 +50,12 @@ export function canManageRole(userRole: Role, targetRole: Role): boolean {
   if (userRole === Role.SuperAdmin && targetRole !== Role.SuperAdmin) {
     return true;
   }
-  
+
   // Admin can only manage Members and Clients
   if (userRole === Role.Admin && (targetRole === Role.Member || targetRole === Role.Client)) {
     return true;
   }
-  
+
   return false;
 }
 
@@ -64,11 +64,11 @@ export function canSendInvite(userRole: Role, inviteRole: Role): boolean {
   if (inviteRole === Role.Admin) {
     return userRole === Role.SuperAdmin;
   }
-  
+
   // Both SuperAdmin and Admin can invite Members and Clients
   if (inviteRole === Role.Member || inviteRole === Role.Client) {
     return userRole === Role.SuperAdmin || userRole === Role.Admin;
   }
-  
+
   return false;
 }

@@ -5,12 +5,11 @@ const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters').max(40),
-  confirmPassword: z.string(),
-  role: z.nativeEnum(Role).default(Role.Member)
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
+  role: z.nativeEnum(Role).default(Role.Member),
+  businessId: z.string().optional(),
+  invitationToken: z.string().optional()
 });
+// Remove confirmPassword and the refine validation
 
 export const authValidation = {
   register: {

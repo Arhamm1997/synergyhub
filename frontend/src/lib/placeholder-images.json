@@ -1,0 +1,30 @@
+{
+    "projectCovers": [
+        "/images/placeholders/project-cover-1.jpg",
+        "/images/placeholders/project-cover-2.jpg",
+        "/images/placeholders/project-cover-3.jpg",
+        "/images/placeholders/project-cover-4.jpg",
+        "/images/placeholders/project-cover-5.jpg"
+    ],
+    "clientLogos": [
+        "/images/placeholders/client-logo-1.png",
+        "/images/placeholders/client-logo-2.png",
+        "/images/placeholders/client-logo-3.png",
+        "/images/placeholders/client-logo-4.png",
+        "/images/placeholders/client-logo-5.png"
+    ],
+    "avatars": [
+        "/images/placeholders/avatar-1.jpg",
+        "/images/placeholders/avatar-2.jpg",
+        "/images/placeholders/avatar-3.jpg",
+        "/images/placeholders/avatar-4.jpg",
+        "/images/placeholders/avatar-5.jpg"
+    ],
+    "taskImages": [
+        "/images/placeholders/task-1.jpg",
+        "/images/placeholders/task-2.jpg",
+        "/images/placeholders/task-3.jpg",
+        "/images/placeholders/task-4.jpg",
+        "/images/placeholders/task-5.jpg"
+    ]
+}

@@ -13,6 +13,8 @@ import {
   Users as UsersIcon,
   Building2,
   UserPlus,
+  Shield,
+  Mail,
 } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
 
@@ -35,16 +37,28 @@ const navItems = [
   { href: "/dashboard/clients", label: "Clients", icon: Users },
   { href: "/dashboard/members", label: "Members", icon: UsersIcon },
   { href: "/dashboard/business", label: "My Business", icon: Building2 },
-  { 
-    href: "/dashboard/admin-requests", 
-    label: "Admin Requests", 
+  {
+    href: "/dashboard/admin-requests",
+    label: "Admin Requests",
     icon: UserPlus,
+    adminOnly: true
+  },
+  {
+    href: "/admin/invitations",
+    label: "Send Invitations",
+    icon: Mail,
+    adminOnly: true
+  },
+  {
+    href: "/admin/dashboard",
+    label: "Role Permissions",
+    icon: Shield,
     adminOnly: true
   },
 ];
 
 const settingsNav = [
-    { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ]
 
 export function SidebarNav() {
@@ -86,21 +100,21 @@ export function SidebarNav() {
       </SidebarContent>
       <SidebarFooter className="mt-auto">
         <Separator />
-         <SidebarMenu>
-            {settingsNav.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={isActive(item.href)}
-                        tooltip={{ children: item.label }}
-                    >
-                        <Link href={item.href}>
-                            <item.icon />
-                            <span>{item.label}</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            ))}
+        <SidebarMenu>
+          {settingsNav.map((item) => (
+            <SidebarMenuItem key={item.label}>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive(item.href)}
+                tooltip={{ children: item.label }}
+              >
+                <Link href={item.href}>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
         </SidebarMenu>
       </SidebarFooter>
     </>

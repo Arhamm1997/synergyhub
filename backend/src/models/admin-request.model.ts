@@ -1,16 +1,15 @@
 import mongoose, { Document } from 'mongoose';
-import { Role, UserStatus } from '../types/enums';
 
 export enum AdminRequestStatus {
-  Pending = 'Pending',
-  Approved = 'Approved',
-  Rejected = 'Rejected'
+  Pending = 'pending',
+  Approved = 'approved',
+  Rejected = 'rejected'
 }
 
 export interface IAdminRequest extends Document {
-  name: string;
-  email: string;
-  hashedPassword: string;
+  user: mongoose.Types.ObjectId;
+  business: mongoose.Types.ObjectId;
+  message?: string;
   status: AdminRequestStatus;
   requestedAt: Date;
   processedAt?: Date;
@@ -19,24 +18,23 @@ export interface IAdminRequest extends Document {
 }
 
 const adminRequestSchema = new mongoose.Schema<IAdminRequest>({
-  name: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  email: {
-    type: String,
-    required: true,
-    trim: true,
-    lowercase: true
-  },
-  hashedPassword: {
-    type: String,
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
+  },
+  business: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Business',
+    required: true
+  },
+  message: {
+    type: String,
+    trim: true
   },
   status: {
     type: String,
-    enum: AdminRequestStatus,
+    enum: Object.values(AdminRequestStatus),
     default: AdminRequestStatus.Pending
   },
   requestedAt: {

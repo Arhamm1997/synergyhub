@@ -33,7 +33,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { RoleBadge } from "@/components/ui/role-badge";
 import { Shield, User, Briefcase } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -132,24 +132,24 @@ export function MemberDialog({ children, member, onSave, isOpen, onOpenChange }:
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-             <div className="flex items-center gap-4">
-                <Avatar className="h-20 w-20">
-                    {avatarPreview ? (
-                        <AvatarImage src={avatarPreview} alt="Avatar preview" />
-                    ) : (
-                        <AvatarFallback>{form.getValues('name')?.substring(0, 2) || '??'}</AvatarFallback>
-                    )}
-                </Avatar>
-                <div className="flex-grow">
-                    <FormLabel>Profile Picture</FormLabel>
-                    <FormControl>
-                        <Input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleAvatarChange} />
-                    </FormControl>
-                     <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full mt-2">
-                        Upload Picture
-                    </Button>
-                     <FormMessage>{form.formState.errors.avatarUrl?.message}</FormMessage>
-                </div>
+            <div className="flex items-center gap-4">
+              <Avatar className="h-20 w-20">
+                {avatarPreview ? (
+                  <AvatarImage src={avatarPreview} alt="Avatar preview" />
+                ) : (
+                  <AvatarFallback>{form.getValues('name')?.substring(0, 2) || '??'}</AvatarFallback>
+                )}
+              </Avatar>
+              <div className="flex-grow">
+                <FormLabel>Profile Picture</FormLabel>
+                <FormControl>
+                  <Input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleAvatarChange} />
+                </FormControl>
+                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full mt-2">
+                  Upload Picture
+                </Button>
+                <FormMessage>{form.formState.errors.avatarUrl?.message}</FormMessage>
+              </div>
             </div>
 
             <FormField
@@ -179,7 +179,7 @@ export function MemberDialog({ children, member, onSave, isOpen, onOpenChange }:
               )}
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                 <FormField
+              <FormField
                 control={form.control}
                 name="role"
                 render={({ field }) => {
@@ -228,8 +228,8 @@ export function MemberDialog({ children, member, onSave, isOpen, onOpenChange }:
                       <div className="rounded-lg border p-3">
                         <p className="text-sm text-muted-foreground">
                           {field.value === Role.Admin ? 'Full access to manage team, projects, and settings.' :
-                           field.value === Role.Member ? 'Access to assigned projects and tasks.' :
-                           'Limited access to view assigned projects and communicate with team.'}
+                            field.value === Role.Member ? 'Access to assigned projects and tasks.' :
+                              'Limited access to view assigned projects and communicate with team.'}
                         </p>
                       </div>
                       <FormMessage />
@@ -237,21 +237,21 @@ export function MemberDialog({ children, member, onSave, isOpen, onOpenChange }:
                   );
                 }}
               />
-               <FormField
+              <FormField
                 control={form.control}
                 name="department"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Department</FormLabel>
                     <FormControl>
-                        <Input placeholder="e.g. Engineering" {...field} />
+                      <Input placeholder="e.g. Engineering" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-             <FormField
+            <FormField
               control={form.control}
               name="details"
               render={({ field }) => (
@@ -264,7 +264,7 @@ export function MemberDialog({ children, member, onSave, isOpen, onOpenChange }:
                 </FormItem>
               )}
             />
-            
+
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button type="submit">{member ? "Save Changes" : "Add Member"}</Button>

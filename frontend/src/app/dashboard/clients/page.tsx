@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { PlusCircle, MoreVertical, Trash2 } from "lucide-react";
@@ -14,12 +14,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -41,59 +41,7 @@ import { ClientDialog } from "@/components/clients/client-dialog";
 import type { Client, ClientStatus } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
-const initialClients: Client[] = [
-  {
-    id: "1",
-    name: "Innovate Corp",
-    logoUrl: "https://picsum.photos/seed/logo1/40/40",
-    logoHint: "abstract logo",
-    project: "Mobile App Redesign",
-    status: "Active",
-    progress: 75,
-    assignees: [
-      { name: "Sarah Lee", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!, avatarHint: 'woman portrait' },
-      { name: "David Chen", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageUrl!, avatarHint: 'man portrait professional' },
-    ],
-  },
-  {
-    id: "2",
-    name: "QuantumLeap",
-    logoUrl: "https://picsum.photos/seed/logo2/40/40",
-    logoHint: "geometric logo",
-    project: "AI Integration",
-    status: "Completed",
-    progress: 100,
-    assignees: [
-      { name: "Maria Rodriguez", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageUrl!, avatarHint: 'woman professional' },
-    ],
-  },
-  {
-    id: "3",
-    name: "Stellar Solutions",
-    logoUrl: "https://picsum.photos/seed/logo3/40/40",
-    logoHint: "star logo",
-    project: "E-commerce Platform",
-    status: "On Hold",
-    progress: 30,
-    assignees: [
-      { name: "Alex Moran", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-1')?.imageUrl!, avatarHint: 'man portrait' },
-      { name: "Sarah Lee", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-2')?.imageUrl!, avatarHint: 'woman portrait' },
-    ],
-  },
-    {
-    id: "4",
-    name: "Apex Enterprises",
-    logoUrl: "https://picsum.photos/seed/logo4/40/40",
-    logoHint: "mountain logo",
-    project: "Data Analytics Dashboard",
-    status: "Active",
-    progress: 50,
-    assignees: [
-        { name: "David Chen", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-3')?.imageUrl!, avatarHint: 'man portrait professional' },
-        { name: "Maria Rodriguez", avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'user-avatar-4')?.imageUrl!, avatarHint: 'woman professional' },
-    ],
-  },
-];
+import { useClientsStore } from "@/store/clients-store";
 
 const statusVariant: { [key in ClientStatus]: "default" | "secondary" | "destructive" | "outline" } = {
   "Active": "default",
@@ -104,27 +52,32 @@ const statusVariant: { [key in ClientStatus]: "default" | "secondary" | "destruc
 };
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>(initialClients);
+  const { clients, isLoading, error, fetchClients, createClient, updateClient, deleteClient } = useClientsStore();
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const handleSaveClient = (clientData: Omit<Client, 'id' | 'project' | 'progress' | 'assignees'> | Client) => {
-    if ('id' in clientData) {
-      // Editing existing client
-      setClients(prev => prev.map(c => c.id === clientData.id ? { ...c, ...clientData } as Client : c));
-      toast({ title: "Client Updated", description: "The client details have been saved."});
-    } else {
-      // Creating new client
-      const clientToAdd: Client = {
-        id: `CLIENT-${Math.floor(Math.random() * 10000)}`,
-        project: "New Project",
-        progress: 0,
-        assignees: [],
-        ...clientData
+  useEffect(() => {
+    fetchClients();
+  }, [fetchClients]);
+
+  const handleSaveClient = async (clientData: any) => {
+    try {
+      if ('id' in clientData) {
+        // Editing existing client
+        await updateClient(clientData.id, clientData);
+        toast({ title: "Client Updated", description: "The client details have been saved." });
+      } else {
+        // Creating new client
+        await createClient(clientData);
+        toast({ title: "Client Created", description: "The new client has been added." });
       }
-      setClients(prev => [clientToAdd, ...prev]);
-      toast({ title: "Client Created", description: "The new client has been added."});
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: (error as Error).message,
+        variant: "destructive"
+      });
     }
   };
 
@@ -133,9 +86,17 @@ export default function ClientsPage() {
     setIsClientDialogOpen(true);
   }
 
-  const handleDeleteClient = (clientId: string) => {
-    setClients(prev => prev.filter(c => c.id !== clientId));
-    toast({ title: "Client Deleted", description: "The client has been successfully deleted." });
+  const handleDeleteClient = async (clientId: string) => {
+    try {
+      await deleteClient(clientId);
+      toast({ title: "Client Deleted", description: "The client has been successfully deleted." });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: (error as Error).message,
+        variant: "destructive"
+      });
+    }
   }
 
   const onDialogClose = () => {
@@ -145,12 +106,12 @@ export default function ClientsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-       <div className="flex items-center justify-between">
-         <div>
-            <h1 className="text-2xl font-bold">Clients</h1>
-            <p className="text-muted-foreground">Manage all your client relationships and projects.</p>
-         </div>
-        <ClientDialog 
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Clients</h1>
+          <p className="text-muted-foreground">Manage all your client relationships and projects.</p>
+        </div>
+        <ClientDialog
           onSave={handleSaveClient}
           isOpen={isClientDialogOpen && !editingClient}
           onOpenChange={setIsClientDialogOpen}
@@ -163,96 +124,144 @@ export default function ClientsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {clients.map((client) => (
-          <Card key={client.id}>
-            <CardHeader className="flex flex-row items-start justify-between">
-              <div className="flex items-center gap-4">
-                <Image
-                  src={client.logoUrl}
-                  alt={`${client.name} logo`}
-                  data-ai-hint={client.logoHint}
-                  width={40}
-                  height={40}
-                  className="rounded-lg"
-                />
-                <div>
-                  <CardTitle>{client.name}</CardTitle>
-                  <CardDescription>{client.project}</CardDescription>
-                </div>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => handleOpenEditDialog(client)}>
-                    Edit Client
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                   <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete Client
-                          </DropdownMenuItem>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                          <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete the client "{client.name}".
-                          </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDeleteClient(client.id)}>Delete</AlertDialogAction>
-                          </AlertDialogFooter>
-                      </AlertDialogContent>
-                  </AlertDialog>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                 <Badge variant={statusVariant[client.status] || 'outline'}>{client.status}</Badge>
-                 <div className="flex -space-x-2">
-                    {client.assignees.map((member, index) => (
-                        <Avatar key={index} className="h-6 w-6 border-2 border-card">
-                            <AvatarImage src={member.avatarUrl} alt={member.name} />
-                            <AvatarFallback>{member.name.substring(0,2)}</AvatarFallback>
-                        </Avatar>
-                    ))}
-                 </div>
-              </div>
-              {client.progress !== undefined && (
-                <div>
-                  <div className="flex justify-between text-sm text-muted-foreground mb-1">
-                      <span>Progress</span>
-                      <span>{client.progress}%</span>
+        {isLoading ? (
+          Array(3).fill(0).map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader className="flex flex-row items-start justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-lg bg-muted"></div>
+                  <div className="space-y-2">
+                    <div className="h-4 w-24 bg-muted rounded"></div>
+                    <div className="h-3 w-32 bg-muted rounded"></div>
                   </div>
-                  <Progress value={client.progress} />
                 </div>
-              )}
-            </CardContent>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="h-4 w-16 bg-muted rounded"></div>
+                <div className="h-2 w-full bg-muted rounded"></div>
+              </CardContent>
+              <CardFooter>
+                <div className="h-9 w-full bg-muted rounded"></div>
+              </CardFooter>
+            </Card>
+          ))
+        ) : error ? (
+          <Card className="col-span-full">
+            <CardHeader>
+              <CardTitle className="text-destructive">Error</CardTitle>
+              <CardDescription>{error}</CardDescription>
+            </CardHeader>
+          </Card>
+        ) : clients.length === 0 ? (
+          <Card className="col-span-full">
+            <CardHeader>
+              <CardTitle>No Clients</CardTitle>
+              <CardDescription>Get started by adding your first client.</CardDescription>
+            </CardHeader>
             <CardFooter>
-              <Button asChild variant="outline" className="w-full">
-                <Link href={`/dashboard/clients/${client.id}`}>View Details</Link>
-              </Button>
+              <ClientDialog
+                onSave={handleSaveClient}
+                isOpen={isClientDialogOpen && !editingClient}
+                onOpenChange={setIsClientDialogOpen}
+              >
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add New Client
+                </Button>
+              </ClientDialog>
             </CardFooter>
           </Card>
-        ))}
+        ) : (
+          clients.map((client) =>
+            <Card key={client.id}>
+              <CardHeader className="flex flex-row items-start justify-between">
+                <div className="flex items-center gap-4">
+                  <Image
+                    src={client.logoUrl}
+                    alt={`${client.name} logo`}
+                    data-ai-hint={client.logoHint}
+                    width={40}
+                    height={40}
+                    className="rounded-lg"
+                  />
+                  <div>
+                    <CardTitle>{client.name}</CardTitle>
+                    <CardDescription>{client.project}</CardDescription>
+                  </div>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <span className="sr-only">Open menu</span>
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => handleOpenEditDialog(client)}>
+                      Edit Client
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Client
+                        </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the client "{client.name}".
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteClient(client.id)}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Badge variant={statusVariant[client.status] || 'outline'}>{client.status}</Badge>
+                  <div className="flex -space-x-2">
+                    {client.assignees.map((member, index) => (
+                      <Avatar key={index} className="h-6 w-6 border-2 border-card">
+                        <AvatarImage src={member.avatarUrl} alt={member.name} />
+                        <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
+                      </Avatar>
+                    ))}
+                  </div>
+                </div>
+                {client.progress !== undefined && (
+                  <div>
+                    <div className="flex justify-between text-sm text-muted-foreground mb-1">
+                      <span>Progress</span>
+                      <span>{client.progress}%</span>
+                    </div>
+                    <Progress value={client.progress} />
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href={`/dashboard/clients/${client.id}`}>View Details</Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
       </div>
 
-       {editingClient && (
+      {editingClient && (
         <ClientDialog
-            client={editingClient}
-            onSave={(editedClient) => handleSaveClient({ ...editingClient, ...editedClient })}
-            isOpen={isClientDialogOpen && !!editingClient}
-            onOpenChange={onDialogClose}
+          client={editingClient}
+          onSave={(editedClient) => handleSaveClient({ ...editingClient, ...editedClient })}
+          isOpen={isClientDialogOpen && !!editingClient}
+          onOpenChange={onDialogClose}
         />
       )}
     </div>

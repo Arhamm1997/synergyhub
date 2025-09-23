@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { AnyZodObject, ZodError, z } from 'zod';
+import { ZodError, z } from 'zod';
 import { logger } from '../utils/logger';
 
 type ValidationSchemaObject = {

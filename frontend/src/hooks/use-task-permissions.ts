@@ -7,7 +7,7 @@ import { useTaskStore } from '@/store/task-store';
 export function useTaskPermissions(taskId: string) {
   const { currentMember } = useMemberStore();
   const { getTaskById } = useTaskStore();
-  
+
   const permissions = useMemo(() => {
     if (!currentMember) return [];
 
@@ -17,7 +17,7 @@ export function useTaskPermissions(taskId: string) {
     // Special case: if user is the assignee, they get edit and comment permissions
     const task = getTaskById(taskId);
     const isAssignee = task?.assignee.name === currentMember.name;
-    
+
     if (isAssignee) {
       return Array.from(new Set([
         ...rolePermissions,

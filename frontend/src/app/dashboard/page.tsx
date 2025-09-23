@@ -1,15 +1,23 @@
 
+"use client";
+
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { TaskProgressChart } from "@/components/dashboard/task-progress-chart";
 import { RecentTasks } from "@/components/dashboard/recent-tasks";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuthStore } from "@/store/auth-store";
 
 export default function DashboardPage() {
+  const { user } = useAuthStore();
+  
+  // Get the user's first name for the greeting
+  const firstName = user?.profile?.firstName || user?.name?.split(' ')[0] || 'User';
+  
   return (
     <div className="flex flex-col gap-4">
        <div className="flex items-center justify-between">
          <div>
-            <h1 className="text-2xl font-bold">Welcome Back, Alex!</h1>
+            <h1 className="text-2xl font-bold">Welcome Back, {firstName}!</h1>
             <p className="text-muted-foreground">Here's a summary of your team's activity.</p>
          </div>
       </div>

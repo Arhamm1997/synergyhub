@@ -6,6 +6,7 @@ import { ConnectionStatus } from '@/components/connection-status';
 import { LoadingProvider } from '@/providers/loading-provider';
 import { RouteChangeLoader } from '@/components/route-change-loader';
 import { CompilationLoader } from '@/components/compilation-loader';
+import { AuthProvider } from '@/components/auth-provider';
 
 export const metadata: Metadata = {
   title: 'SynergyHub',
@@ -31,13 +32,15 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <LoadingProvider>
-            <RouteChangeLoader />
-            <CompilationLoader />
-            {children}
-            <Toaster />
-            <ConnectionStatus />
-          </LoadingProvider>
+          <AuthProvider>
+            <LoadingProvider>
+              <RouteChangeLoader />
+              <CompilationLoader />
+              {children}
+              <Toaster />
+              <ConnectionStatus />
+            </LoadingProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -5,3 +5,8 @@ export * from './task.model';
 export * from './client.model';
 export * from './message.model';
 export * from './notification.model';
+export * from './team.model';
+export * from './timetracking.model';
+export * from './audit.model';
+export * from './invitation.model';
+export * from './admin-request.model';

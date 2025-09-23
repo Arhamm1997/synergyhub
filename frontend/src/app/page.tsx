@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,20 +27,22 @@ import {
 import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/logo";
 import { useToast } from "@/hooks/use-toast";
+import { useAuthStore } from "@/store/auth-store";
 
 const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  password: z.string().min(8, {
-    message: "Password must be at least 8 characters.",
+  password: z.string().min(1, {
+    message: "Password is required.",
   }),
 });
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  
+  const { login, isLoading, error, isAuthenticated, user, clearError } = useAuthStore();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -48,13 +51,39 @@ export default function LoginPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Mock login logic
-    toast({
-      title: "Login Successful",
-      description: "Welcome back! Redirecting to your dashboard.",
-    });
-    router.push("/dashboard");
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (user.role === 'super_admin' || user.role === 'admin') {
+        router.push('/dashboard');
+      } else {
+        router.push('/dashboard');
+      }
+    }
+  }, [isAuthenticated, user, router]);
+
+  // Clear error when component mounts
+  useEffect(() => {
+    clearError();
+  }, [clearError]);
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      await login(values);
+
+      toast({
+        title: "Login Successful",
+        description: "Welcome back! Redirecting to your dashboard.",
+      });
+
+      // Router will redirect based on useEffect above
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: error.message || "Invalid credentials. Please try again.",
+        variant: "destructive",
+      });
+    }
   }
 
   return (
@@ -114,8 +143,13 @@ export default function LoginPage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full">
-                    Login
+                  {error && (
+                    <div className="text-sm text-destructive text-center">
+                      {error}
+                    </div>
+                  )}
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Signing in..." : "Login"}
                   </Button>
                 </form>
               </Form>

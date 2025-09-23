@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useLoading } from '@/providers/loading-provider';
 
-export function RouteChangeLoader() {
+function RouteChangeLoaderInner() {
   const { startLoading, stopLoading } = useLoading();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -45,6 +45,14 @@ export function RouteChangeLoader() {
   }, [stopLoading]);
 
   return null;
+}
+
+export function RouteChangeLoader() {
+  return (
+    <Suspense fallback={null}>
+      <RouteChangeLoaderInner />
+    </Suspense>
+  );
 }
 
 // Example usage in a component

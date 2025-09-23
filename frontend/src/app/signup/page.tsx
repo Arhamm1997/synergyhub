@@ -39,30 +39,28 @@ import { InvitationValidation } from "@/components/auth/invitation-validation";
 
 import { Role } from "@/lib/types";
 
-const formSchema = z
-  .object({
-    name: z.string().min(1, "Full name is required"),
-    email: z.string().email({
-      message: "Please enter a valid email address.",
-    }),
-    password: z.string().min(8, {
-      message: "Password must be at least 8 characters.",
-    }),
-    confirmPassword: z.string(),
+const formSchema = z.object({
+  name: z.string().min(1, "Full name is required"),
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+  password: z.string().min(8, {
+    message: "Password must be at least 8 characters.",
+  }),
+  businessId: z.string().optional(),
+  role: z.enum([Role.Admin, Role.Member]).default(Role.Member),
+  invitationToken: z.string().optional(),
+});
 
-    businessId: z.string().optional(),
-    role: z.enum([Role.Admin, Role.Member]).default(Role.Member),
-    invitationToken: z.string().optional(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match.",
-    path: ["confirmPassword"],
-  });
+import { Suspense, useState, useEffect } from "react";
+import { useAuthStore } from "@/store/auth-store";
 
-export default function SignupPage() {
+function SignupPageInner() {
   const router = useRouter();
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const { signup, isLoading, error, clearError } = useAuthStore();
+  const [isFirstUser, setIsFirstUser] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -70,18 +68,42 @@ export default function SignupPage() {
       name: "",
       email: "",
       password: "",
-      confirmPassword: "",
-      department: "General",
       businessId: "",
       role: Role.Member,
-      invitationToken: searchParams.get("invitation") || "",
+      invitationToken: searchParams.get("token") || searchParams.get("invitation") || "",
     },
   });
+
+  // Check if this is the first user registration
+  useEffect(() => {
+    const checkFirstUser = async () => {
+      try {
+        const response = await api.get('/auth/check-first-user');
+        setIsFirstUser(response.data.isFirstUser);
+        if (response.data.isFirstUser) {
+          form.setValue("role", Role.Admin); // First user becomes admin
+        }
+      } catch (error) {
+        console.error('Error checking first user:', error);
+      }
+    };
+
+    if (!searchParams.get("token") && !searchParams.get("invitation")) {
+      checkFirstUser();
+    }
+  }, [form, searchParams]);
+
+  // Clear errors when component mounts
+  useEffect(() => {
+    clearError();
+  }, [clearError]);
 
   const handleValidInvitation = (businessId: string, email: string, role: Role) => {
     form.setValue("businessId", businessId);
     form.setValue("email", email);
-    form.setValue("role", role);
+    // Only set valid signup roles (Admin or Member)
+    const validRole = (role === Role.Admin || role === Role.Member) ? role : Role.Member;
+    form.setValue("role", validRole);
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -90,22 +112,19 @@ export default function SignupPage() {
         name: values.name,
         email: values.email,
         password: values.password,
-        confirmPassword: values.confirmPassword,
-    
         businessId: values.businessId || undefined,
         role: values.role || Role.Member,
         invitationToken: values.invitationToken
       };
 
-      const response = await api.post(API_ENDPOINTS.AUTH.SIGNUP, formData);
+      await signup(formData);
 
-      // Check if it's a pending admin request
-      if (response.data?.requestStatus === 'pending') {
+      // Success handling
+      if (isFirstUser) {
         toast({
-          title: "Admin Request Submitted",
-          description: "Your request to join as an admin has been submitted and is pending approval.",
+          title: "Welcome to SynergyHub!",
+          description: "Your admin account has been created successfully. You can now log in.",
         });
-        router.push('/admin-request-pending');
       } else {
         toast({
           title: "Account Created",
@@ -113,14 +132,12 @@ export default function SignupPage() {
             ? `Your account has been created! Welcome to the team as ${values.role || 'a member'}!`
             : "Your account has been created! Please log in to continue.",
         });
-        router.push('/');
       }
+
+      router.push('/');
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error?.response?.data?.message || "Failed to create account",
-        variant: "destructive",
-      });
+      console.error('Signup error:', error);
+      // Error is already handled in the store and will be displayed
     }
   }
 
@@ -142,9 +159,12 @@ export default function SignupPage() {
             <CardHeader>
               <CardTitle className="text-2xl">Sign Up</CardTitle>
               <CardDescription>
-                {form.getValues("businessId")
-                  ? "Complete your account setup to join the team"
-                  : "Fill in the details below to create your account"}
+                {isFirstUser
+                  ? "Create the first admin account for SynergyHub"
+                  : form.getValues("businessId")
+                    ? "Complete your account setup to join the team"
+                    : "Fill in the details below to create your account"
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -193,20 +213,7 @@ export default function SignupPage() {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="********" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  {!form.getValues("businessId") && (
+                  {!form.getValues("businessId") && !isFirstUser && (
                     <FormField
                       control={form.control}
                       name="role"
@@ -223,8 +230,8 @@ export default function SignupPage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value={Role.Admin}>Administrator</SelectItem>
-                              <SelectItem value={Role.Member}>Team Member</SelectItem>
+                              <SelectItem value={Role.Admin}>Administrator (Limited to 20 total)</SelectItem>
+                              <SelectItem value={Role.Member}>Employee (Unlimited)</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -232,8 +239,23 @@ export default function SignupPage() {
                       )}
                     />
                   )}
-                  <Button type="submit" className="w-full">
-                    Create Account
+                  {isFirstUser && (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-800 font-medium">
+                        🎉 You're creating the first admin account for SynergyHub!
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        As the first user, you'll have super admin privileges to manage the entire system.
+                      </p>
+                    </div>
+                  )}
+                  {error && (
+                    <div className="text-sm text-destructive text-center p-2 bg-red-50 border border-red-200 rounded">
+                      {error}
+                    </div>
+                  )}
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Creating Account..." : isFirstUser ? "Create Admin Account" : "Create Account"}
                   </Button>
                 </form>
               </Form>
@@ -258,5 +280,13 @@ export default function SignupPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignupPageInner />
+    </Suspense>
   );
 }

@@ -4,6 +4,7 @@ import { User } from '../models/user.model';
 import { AppError } from './error-handler';
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: any;

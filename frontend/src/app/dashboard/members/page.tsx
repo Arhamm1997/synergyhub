@@ -32,13 +32,13 @@ const departmentVariant: { [key: string]: "default" | "secondary" | "destructive
 };
 
 export default function MembersPage() {
-  const { members, businessId, addMember, updateMember, fetchMembers } = useMemberStore();
+  const { members, businessId, quotas, createMember, updateMember, fetchMembers } = useMemberStore();
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
   const { openChat, setContact } = useChatStore();
 
   const handleCreateMember = (newMember: Omit<Member, 'id'>) => {
-    addMember(newMember);
+    createMember(newMember);
   };
 
   const handleUpdateMember = (updatedMember: Member) => {
@@ -66,7 +66,14 @@ export default function MembersPage() {
        <div className="flex items-center justify-between">
          <div>
             <h1 className="text-2xl font-bold">Team Members</h1>
-            <p className="text-muted-foreground">Manage your team and their roles.</p>
+            <p className="text-muted-foreground">
+              Manage your team and their roles.
+              {quotas && (
+                <span className="ml-2">
+                  {members.length} of {quotas.total} members used
+                </span>
+              )}
+            </p>
          </div>
          <div className="flex items-center gap-2">
            <InviteMemberDialog 

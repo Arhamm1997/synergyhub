@@ -232,8 +232,8 @@ export function InviteDialog() {
             </div>
 
             <DialogFooter>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 type="button"
                 onClick={() => setIsOpen(false)}
               >

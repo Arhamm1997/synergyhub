@@ -7,35 +7,35 @@ import Link from "next/link";
 import { Search, LogOut, User, Settings, LayoutGrid, PlusCircle, UserPlus, Shield, Briefcase, FolderKanban, ListChecks, MessageSquare, Users as UsersIcon } from "lucide-react";
 import { useState } from "react";
 import { Role } from "@/lib/types";
-import { useUser } from "@/hooks/use-user";
+import { useAuthStore } from "@/store/auth-store";
 import { api } from "@/lib/api-config";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from "@/components/ui/dialog";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -43,12 +43,12 @@ import * as z from "zod";
 import { RoleBadge } from "@/components/ui/role-badge";
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -67,20 +67,20 @@ const navItems = [
 ];
 
 const inviteFormSchema = z.object({
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
-  name: z.string().min(1, "Full name is required"),
-  role: z.nativeEnum(Role),
-  department: z.string().min(1, "Department is required"),
-  phoneNumber: z.string().optional(),
-  message: z.string().optional()
+    email: z.string().email({
+        message: "Please enter a valid email address.",
+    }),
+    name: z.string().min(1, "Full name is required"),
+    role: z.nativeEnum(Role),
+    department: z.string().min(1, "Department is required"),
+    phoneNumber: z.string().optional(),
+    message: z.string().optional()
 });
 
 type InviteFormValues = z.infer<typeof inviteFormSchema>;
 
 function InviteDialog() {
-    const { user } = useUser();
+    const { user } = useAuthStore();
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
     const form = useForm<InviteFormValues>({
@@ -98,7 +98,7 @@ function InviteDialog() {
     const isLoading = form.formState.isSubmitting;
 
     async function onSubmit(data: InviteFormValues) {
-        if (!user?.id) {
+        if (!user?._id) {
             toast({
                 title: 'Error',
                 description: 'You must be logged in to send invitations',
@@ -192,8 +192,8 @@ function InviteDialog() {
                                     <div className="rounded-lg border p-3">
                                         <p className="text-sm text-muted-foreground">
                                             {field.value === Role.Admin ? 'Full access to manage team, projects, and settings.' :
-                                             field.value === Role.Member ? 'Access to assigned projects and tasks.' :
-                                             'Limited access to view assigned projects and communicate with team.'}
+                                                field.value === Role.Member ? 'Access to assigned projects and tasks.' :
+                                                    'Limited access to view assigned projects and communicate with team.'}
                                         </p>
                                     </div>
                                     <FormMessage />
@@ -263,9 +263,9 @@ function InviteDialog() {
                                 <FormItem>
                                     <FormLabel>Personal Message (Optional)</FormLabel>
                                     <FormControl>
-                                        <Input 
-                                            placeholder="Add a personal message to the invitation email" 
-                                            {...field} 
+                                        <Input
+                                            placeholder="Add a personal message to the invitation email"
+                                            {...field}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -315,72 +315,72 @@ function InviteDialog() {
 }
 
 export function Header() {
-  const pathname = usePathname();
-  const { user } = useUser();
+    const pathname = usePathname();
+    const { user } = useAuthStore();
 
-  const getPageTitle = () => {
-    const currentNav = navItems.find(item => pathname.startsWith(item.href));
-    return currentNav ? currentNav.label : "SynergyHub";
-  };
-  
-  return (
-    <header className="flex h-14 items-center gap-4 border-b bg-background/60 px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30 backdrop-blur-xl">
-      <SidebarTrigger className="md:hidden" />
-      <div className="w-full flex-1">
-        <h1 className="font-semibold text-lg">{getPageTitle()}</h1>
-      </div>
-      <div className="flex flex-1 items-center justify-end gap-2 md:ml-auto">
-        <form className="ml-auto flex-1 sm:flex-initial hidden md:block">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search tasks, projects..."
-              className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
-            />
-          </div>
-        </form>
-        <InviteDialog />
-        <NotificationPrioritizer />
-        <ThemeToggle />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Avatar className="h-8 w-8">
-                {user?.avatarUrl ? (
-                  <AvatarImage 
-                    src={user.avatarUrl} 
-                    alt={`${user.name}'s avatar`} 
-                  />
-                ) : (
-                  <AvatarFallback>
-                    {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || '??'}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>
-              <div className="flex flex-col space-y-2">
-                <div className="flex flex-col">
-                  <p className="text-sm font-medium leading-none">{user?.name || 'Unknown User'}</p>
-                  <p className="text-xs leading-none text-muted-foreground mt-1">
-                    {user?.email || 'No email'}
-                  </p>
-                </div>
-                {user?.role && <RoleBadge role={user.role} size="sm" />}
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild><Link href="/dashboard"><LayoutGrid className="mr-2 h-4 w-4" />Dashboard</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link href="/dashboard/settings"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild><Link href="/"><LogOut className="mr-2 h-4 w-4" />Log out</Link></DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </header>
-  );
+    const getPageTitle = () => {
+        const currentNav = navItems.find(item => pathname.startsWith(item.href));
+        return currentNav ? currentNav.label : "SynergyHub";
+    };
+
+    return (
+        <header className="flex h-14 items-center gap-4 border-b bg-background/60 px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30 backdrop-blur-xl">
+            <SidebarTrigger className="md:hidden" />
+            <div className="w-full flex-1">
+                <h1 className="font-semibold text-lg">{getPageTitle()}</h1>
+            </div>
+            <div className="flex flex-1 items-center justify-end gap-2 md:ml-auto">
+                <form className="ml-auto flex-1 sm:flex-initial hidden md:block">
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search tasks, projects..."
+                            className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
+                        />
+                    </div>
+                </form>
+                <InviteDialog />
+                <NotificationPrioritizer />
+                <ThemeToggle />
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="rounded-full">
+                            <Avatar className="h-8 w-8">
+                                {user?.avatarUrl ? (
+                                    <AvatarImage
+                                        src={user.avatarUrl}
+                                        alt={`${user.name}'s avatar`}
+                                    />
+                                ) : (
+                                    <AvatarFallback>
+                                        {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || '??'}
+                                    </AvatarFallback>
+                                )}
+                            </Avatar>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>
+                            <div className="flex flex-col space-y-2">
+                                <div className="flex flex-col">
+                                    <p className="text-sm font-medium leading-none">{user?.name || 'Unknown User'}</p>
+                                    <p className="text-xs leading-none text-muted-foreground mt-1">
+                                        {user?.email || 'No email'}
+                                    </p>
+                                </div>
+                                {user?.role && <RoleBadge role={user.role} size="sm" />}
+                            </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild><Link href="/dashboard"><LayoutGrid className="mr-2 h-4 w-4" />Dashboard</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href="/dashboard/settings"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild><Link href="/"><LogOut className="mr-2 h-4 w-4" />Log out</Link></DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+        </header>
+    );
 }
